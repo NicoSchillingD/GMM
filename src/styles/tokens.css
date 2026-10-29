@@ -1,0 +1,159 @@
+/* Glasstech Design System — generated from tokens.json */
+:root, [data-theme="default"] {
+  --azul: #00324b;
+  --celeste: #0096d2;
+  --naranjo: #f7841c;
+  --gris: #7e96a2;
+  --navy-900: #002234;
+  --navy-800: #00324b;
+  --navy-700: #0b4664;
+  --navy-600: #1a5a7c;
+  --sky-700: #0079ab;
+  --sky-600: #0096d2;
+  --sky-500: #33aede;
+  --sky-100: #e3f4fb;
+  --orange-700: #d96c0c;
+  --orange-600: #f7841c;
+  --orange-500: #fa9c45;
+  --orange-100: #fef1e2;
+  --gray-900: #16242c;
+  --gray-700: #3f5560;
+  --gray-600: #5d7883;
+  --gray-500: #7e96a2;
+  --gray-400: #a4b6be;
+  --gray-300: #c6d3d9;
+  --gray-200: #dfe7ea;
+  --gray-100: #eff3f5;
+  --gray-050: #f7f9fa;
+  --white: #ffffff;
+  --success: #1f8a5b;
+  --warning: #f7841c;
+  --danger: #c8362c;
+  --info: #0096d2;
+  --fg-1: var(--navy-800);
+  --fg-2: var(--gray-700);
+  --fg-muted: var(--gray-500);
+  --fg-on-dark: var(--white);
+  --surface-page: var(--white);
+  --surface-alt: var(--gray-050);
+  --surface-card: var(--white);
+  --surface-dark: var(--navy-800);
+  --surface-tint: var(--sky-100);
+  --border-1: var(--gray-200);
+  --border-2: var(--gray-300);
+  --border-focus: var(--sky-600);
+  --brand-primary: var(--azul);
+  --brand-secondary: var(--celeste);
+  --brand-accent: var(--naranjo);
+  --brand-neutral: var(--gris);
+  --link: var(--sky-600);
+  --link-hover: var(--azul);
+  --shadow-sm: 0 1px 2px rgba(0,38,62,0.06);
+  --shadow-md: 0 4px 12px rgba(0,38,62,0.10);
+  --shadow-lg: 0 12px 32px rgba(0,38,62,0.14);
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-10: 128px;
+  --container-max: 1200px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-pill: 999px;
+  --ease-standard: cubic-bezier(.2,.8,.2,1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --text-display-1: clamp(40px,5vw,64px);
+  --text-display-2: clamp(32px,4vw,48px);
+  --leading-tight: 1.05;
+  --leading-heading: 1.15;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --tracking-title: -0.02em;
+  --tracking-caps: 0.05em;
+  --font-display: 'Raleway',system-ui,sans-serif;
+  --font-subtitle: 'Montserrat',system-ui,sans-serif;
+  --font-body: 'Montserrat',system-ui,sans-serif;
+  --text-text-h1: 400 32px/1.4 var(--font-body);
+  --text-text-h2: 400 26px/1.4 var(--font-body);
+  --text-text-h3: 400 21px/1.4 var(--font-body);
+  --text-text-h4: 400 18px/1.4 var(--font-body);
+  --text-text-subtitle: 400 15px/1.4 var(--font-body);
+  --text-text-body-lg: 400 18px/1.4 var(--font-body);
+  --text-text-body: 400 16px/1.6 var(--font-body);
+  --text-text-body-sm: 400 14px/1.4 var(--font-body);
+  --text-text-caption: 400 12px/1.4 var(--font-body);
+}
+.text-h1 {
+  font-family: var(--font-body);
+  font-size: 32px;
+  line-height: 1.4;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.text-h2 {
+  font-family: var(--font-body);
+  font-size: 26px;
+  line-height: 1.4;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.text-h3 {
+  font-family: var(--font-body);
+  font-size: 21px;
+  line-height: 1.4;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.text-h4 {
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.text-subtitle {
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.4;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+}
+.text-body-lg {
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.text-body {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.text-body-sm {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.text-caption {
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 400;
+  letter-spacing: 0;
+}
