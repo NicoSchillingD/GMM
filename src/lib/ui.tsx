@@ -2,7 +2,7 @@ import type { Asset, FailureStatus, AssetStatus } from './types';
 
 export const ASSET_STATUS: Record<AssetStatus, [string, string]> = {
   operativo: ['Operativo', 'ok'], fuera_servicio: ['Fuera de servicio', 'bad'],
-  en_mantencion: ['En mantención', 'warn'], desincorporado: ['Desincorporado', ''],
+  en_mantencion: ['En mantención', 'warn'], standby: ['Standby', 'info'], desincorporado: ['Desincorporado', ''],
 };
 export const FAIL_STATUS: Record<FailureStatus, [string, string]> = {
   abierto: ['Abierto', 'bad'], en_revision: ['En revisión', 'warn'], en_curso: ['En curso', 'info'],

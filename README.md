@@ -8,17 +8,16 @@ Activos anidables (árbol activo → componente) · reporte de falla con cámara
 ## Ejecutar
 ```bash
 npm install
-npm run dev          # modo demo (datos locales, 101 activos del inventario)
+npm run dev          # modo demo (datos locales, 114 activos del inventario)
 npm test && npm run build
 ```
 
 ## Conectar Supabase + Microsoft 365
-1. Crear proyecto Supabase y ejecutar `supabase/migrations/0001_init.sql`.
-2. Cargar el inventario: `data/inventory.csv` (101 equipos; TAGs duplicados/vacíos se conservan para revisión).
+1. Crear proyecto Supabase y ejecutar `SUPABASE_DB_URL='postgresql://…' scripts/setup-supabase.sh` (migraciones + seed de 114 activos), o pegar `supabase/migrations/0001_init.sql` y `supabase/seed/seed.sql` (generar con `node scripts/build-seed-sql.mjs`) en el SQL Editor.
+2. El inventario sale de `data/inventory.csv` (planilla Taxonomía Equipos Glasstech; TAGs duplicados/vacíos se conservan para revisión). Los correos de los responsables son provisionales (`nombre-apellido@glasstech.cl`): corrígelos en Usuarios o en la tabla `profiles`; al ingresar con M365 el perfil se enlaza por correo.
 3. Authentication → Providers → Azure: registrar app en Entra ID (tenant Glasstech) y pegar client id/secret.
 4. Copiar `.env.example` a `.env` con `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
 
 ## Pendiente
-- Campos exactos de la planilla de fallas: editar `src/config/failureFields.ts`.
 - Web Push multiusuario (Edge Function) y cola offline de reportes.
 - Seed SQL del inventario para Supabase (la lógica de mapeo está en `src/lib/seed.ts`).

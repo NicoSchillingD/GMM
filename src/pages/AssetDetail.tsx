@@ -21,7 +21,7 @@ export default function AssetDetail() {
   return (
     <>
       <div className="top"><div><Link to="/activos">← Activos</Link><h1>{a.tag || 'S/TAG'} · {a.tipo}</h1></div>
-        {can('mantenimiento') && <select style={{ maxWidth: 200 }} value={a.estado} onChange={(e) => setStatus(e.target.value as AssetStatus)}><option value="operativo">Operativo</option><option value="fuera_servicio">Fuera de servicio</option><option value="en_mantencion">En mantención</option><option value="desincorporado">Desincorporado</option></select>}
+        {can('mantenimiento') && <select style={{ maxWidth: 200 }} value={a.estado} onChange={(e) => setStatus(e.target.value as AssetStatus)}><option value="operativo">Operativo</option><option value="fuera_servicio">Fuera de servicio</option><option value="en_mantencion">En mantención</option><option value="standby">Standby</option><option value="desincorporado">Desincorporado</option></select>}
       </div>
       <div className="grid g2">
         <div className="card"><h2>Ficha</h2>

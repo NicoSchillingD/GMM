@@ -5,28 +5,38 @@ create table areas (id text primary key, nombre text unique not null);
 create table assets (id text primary key, parent_id text references assets(id) on delete set null,
   area_id text references areas(id), tag text not null default '', tipo text not null default '', marca text default '',
   modelo text default '', serie text default '', anio_fab int, estado text not null default 'operativo'
-  check (estado in ('operativo','fuera_servicio','en_mantencion','desincorporado')),
+  check (estado in ('operativo','fuera_servicio','en_mantencion','standby','desincorporado')),
   criticidad text default '', diagnostico text default '', es_componente boolean not null default false);
-create table assignments (id text primary key, profile_id uuid not null references profiles(id) on delete cascade,
+create table assignments (id text primary key, profile_id uuid not null references profiles(id) on delete cascade on update cascade,
   asset_id text references assets(id) on delete cascade, area_id text references areas(id) on delete cascade,
   check (asset_id is not null or area_id is not null));
-create table failures (id text primary key, asset_id text not null references assets(id),
-  reportado_por uuid not null references profiles(id), severidad text not null check (severidad in ('urgente','informativo')),
+create table failures (id text primary key, numero int not null unique, asset_id text not null references assets(id),
+  reportado_por uuid not null references profiles(id) on update cascade, severidad text not null check (severidad in ('urgente','informativo')),
   detiene_produccion boolean not null default false, inicio_detencion timestamptz, liberacion timestamptz,
   descripcion text not null, causa_inmediata text default '', extra jsonb not null default '{}',
   estado text not null default 'abierto' check (estado in ('abierto','en_revision','en_curso','resuelto','cerrado')),
-  fotos text[] not null default '{}', creado timestamptz not null default now());
+  fotos text[] not null default '{}', creado timestamptz not null default now(),
+  fecha_inicio_solucion timestamptz, nota_status text not null default '', nota_solucion text not null default '',
+  encargado_id uuid references profiles(id) on update cascade);
 create table feedback (id text primary key, failure_id text not null references failures(id) on delete cascade,
-  autor uuid not null references profiles(id), comentario text default '', estado text, creado timestamptz not null default now());
+  autor uuid not null references profiles(id) on update cascade, comentario text default '', estado text, creado timestamptz not null default now());
 create table plans (id text primary key, asset_id text not null references assets(id) on delete cascade, nombre text not null,
-  tareas jsonb not null default '[]', frecuencia_dias int not null default 30, proxima_fecha date not null, responsable uuid references profiles(id));
+  tareas jsonb not null default '[]', frecuencia_dias int not null default 30, proxima_fecha date not null, responsable uuid references profiles(id) on update cascade);
 create table work_orders (id text primary key, failure_id text references failures(id), plan_id text references plans(id) on delete set null,
   asset_id text not null references assets(id), tipo text not null check (tipo in ('correctivo','preventivo')),
-  asignado_a uuid references profiles(id), estado text not null default 'pendiente' check (estado in ('pendiente','en_curso','completada')),
+  asignado_a uuid references profiles(id) on update cascade, estado text not null default 'pendiente' check (estado in ('pendiente','en_curso','completada')),
   descripcion text default '', creado timestamptz not null default now(), inicio timestamptz, fin timestamptz);
 create table cost_docs (id text primary key, tipo text not null check (tipo in ('compra','gasto','factura')), numero text default '',
   proveedor text default '', monto numeric not null, fecha date not null, failure_id text references failures(id) on delete set null,
   work_order_id text references work_orders(id) on delete set null, archivo text);
+
+-- Primer ingreso: el perfil precargado (por correo) se enlaza con el usuario de Microsoft 365.
+create function public.claim_profile() returns void language plpgsql security definer set search_path = public as
+$$ begin
+  update profiles set id = auth.uid() where lower(email) = lower(auth.jwt() ->> 'email') and id <> auth.uid()
+    and not exists (select 1 from profiles where id = auth.uid());
+end $$;
+grant execute on function public.claim_profile() to authenticated;
 
 -- Rol del usuario autenticado
 create function public.gmm_role() returns text language sql stable security definer set search_path = public as

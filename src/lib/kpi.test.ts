@@ -3,9 +3,10 @@ import { availability, mttr, mtbf } from './kpi';
 import type { Failure } from './types';
 
 const f = (inicio: string, fin: string | null): Failure => ({
-  id: 'x', asset_id: 'a', reportado_por: 'u', severidad: 'urgente', detiene_produccion: true,
+  id: 'x', numero: 1, asset_id: 'a', reportado_por: 'u', severidad: 'urgente', detiene_produccion: true,
   inicio_detencion: inicio, liberacion: fin, descripcion: '', causa_inmediata: '', extra: {},
   estado: 'resuelto', fotos: [], creado: inicio,
+  fecha_inicio_solucion: null, nota_status: '', nota_solucion: '', encargado_id: null,
 });
 
 describe('kpi', () => {

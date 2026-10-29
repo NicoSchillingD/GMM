@@ -25,6 +25,7 @@ export default function FailureDetail() {
     await insert('feedback', { id: uid(), failure_id: f.id, autor: me!.id, comentario: txt.trim(), estado: st || null, creado: new Date().toISOString() });
     if (st) {
       const patch: Partial<typeof f> = { estado: st };
+      if (st === 'en_curso' && !f.fecha_inicio_solucion) patch.fecha_inicio_solucion = new Date().toISOString();
       if ((st === 'resuelto' || st === 'cerrado') && f.detiene_produccion && !f.liberacion) patch.liberacion = new Date().toISOString();
       await update('failures', f.id, patch);
       if (st === 'resuelto' || st === 'cerrado') await update('assets', f.asset_id, { estado: 'operativo' });
@@ -39,7 +40,7 @@ export default function FailureDetail() {
 
   return (
     <div style={{ maxWidth: 820 }}>
-      <div className="top"><div><Link to="/fallas">← Fallas</Link><h1>{assetLabel(asset)}</h1></div><div className="row"><SevBadge s={f.severidad} /><FailBadge s={f.estado} /></div></div>
+      <div className="top"><div><Link to="/fallas">← Fallas</Link><h1>#{f.numero} · {assetLabel(asset)}</h1></div><div className="row"><SevBadge s={f.severidad} /><FailBadge s={f.estado} /></div></div>
       <div className="card form">
         <div className="row"><span className="muted">Reportada {fmt(f.creado)} por {who(f.reportado_por)}</span></div>
         {f.detiene_produccion && <div className="alert red">Detención desde {fmt(f.inicio_detencion)} · liberación {fmt(f.liberacion)} · {hrs(downtimeHours(f))}</div>}
@@ -48,6 +49,19 @@ export default function FailureDetail() {
         {failureExtraFields.filter((x) => f.extra[x.key]).map((x) => <div key={x.key}><b>{x.label}:</b> {f.extra[x.key]}</div>)}
         <div className="photos">{f.fotos.map((u, i) => <a key={i} href={u} target="_blank" rel="noreferrer"><img src={u} alt={`Foto ${i + 1}`} /></a>)}</div>
         {asset && <Link to={`/activos/${asset.id}`}>Ver ficha del activo →</Link>}
+      </div>
+
+      <div className="card form" style={{ marginTop: 16 }}><h2>Gestión de Mantenimiento</h2>
+        <div className="grid g4">
+          <div><div className="muted">Área</div>{data.areas.find((a) => a.id === asset?.area_id)?.nombre ?? '—'}</div>
+          <div><div className="muted">Fecha inicio solución</div>{fmt(f.fecha_inicio_solucion)}</div>
+          <label className="f">Encargado asignado
+            <select disabled={!isMant} value={f.encargado_id ?? ''} onChange={async (e) => { await update('failures', f.id, { encargado_id: e.target.value || null }); await reload(); }}>
+              <option value="">Sin asignar</option>{data.profiles.filter((p) => p.rol === 'mantenimiento' || p.rol === 'admin').map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+            </select></label>
+        </div>
+        <label className="f">Nota status<textarea disabled={!isMant} defaultValue={f.nota_status} onBlur={async (e) => { if (e.target.value !== f.nota_status) { await update('failures', f.id, { nota_status: e.target.value }); await reload(); } }} /></label>
+        <label className="f">Nota solución<textarea disabled={!isMant} defaultValue={f.nota_solucion} onBlur={async (e) => { if (e.target.value !== f.nota_solucion) { await update('failures', f.id, { nota_solucion: e.target.value }); await reload(); } }} /></label>
       </div>
 
       <div className="card" style={{ marginTop: 16 }}><h2>Feedback de Mantenimiento</h2>

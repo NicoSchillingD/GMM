@@ -15,9 +15,9 @@ export default function Failures() {
         <select style={{ maxWidth: 200 }} value={st} onChange={(e) => setSt(e.target.value)}><option value="">Todos los estados</option><option value="abierto">Abierto</option><option value="en_revision">En revisión</option><option value="en_curso">En curso</option><option value="resuelto">Resuelto</option><option value="cerrado">Cerrado</option></select>
         <select style={{ maxWidth: 200 }} value={sev} onChange={(e) => setSev(e.target.value)}><option value="">Toda severidad</option><option value="urgente">Urgente</option><option value="informativo">Informativo</option></select>
       </div>
-      <div className="card"><table className="stack"><thead><tr><th>Fecha</th><th>Activo</th><th>Problema</th><th>Severidad</th><th>Estado</th><th>Reporta</th></tr></thead><tbody>
+      <div className="card"><table className="stack"><thead><tr><th>N°</th><th>Fecha</th><th>Área</th><th>Equipo</th><th>Descripción</th><th>Tipo</th><th>Status</th><th>Encargado</th></tr></thead><tbody>
         {rows.map((f) => (
-          <tr key={f.id} className="click"><td><Link to={`/fallas/${f.id}`}>{fmt(f.creado)}</Link></td><td>{assetLabel(data.assets.find((a) => a.id === f.asset_id))}</td><td>{f.descripcion.slice(0, 80)}</td><td><SevBadge s={f.severidad} /></td><td><FailBadge s={f.estado} /></td><td>{data.profiles.find((p) => p.id === f.reportado_por)?.nombre}{f.reportado_por === me?.id && ' (yo)'}</td></tr>
+          <tr key={f.id} className="click"><td><Link to={`/fallas/${f.id}`}>{f.numero}</Link></td><td>{fmt(f.creado)}</td><td>{data.areas.find((x) => x.id === data.assets.find((a) => a.id === f.asset_id)?.area_id)?.nombre}</td><td>{assetLabel(data.assets.find((a) => a.id === f.asset_id))}</td><td>{f.descripcion.slice(0, 80)}</td><td><SevBadge s={f.severidad} /></td><td><FailBadge s={f.estado} /></td><td>{data.profiles.find((p) => p.id === f.encargado_id)?.nombre ?? '—'}{f.reportado_por === me?.id && ' · (reportada por mí)'}</td></tr>
         ))}
         {!rows.length && <tr><td className="muted">Sin resultados.</td></tr>}
       </tbody></table></div>

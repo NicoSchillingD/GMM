@@ -1,7 +1,7 @@
 n,area,tag,tipo,marca,modelo,serie,fabricacion,estado,diagnostico,responsable,prioridad
 1,Aluminio,AL-MC-EM0746,Mecanizadora,Emmegi,Comet T6 EL,C120746,2017,OP,,Julio Bustos,A1
 2,Aluminio,AL-CT3-EM6085,Cortadora,Emmegi,Precision TS2 TU/5,C116085,2014,OP,,Julio Bustos,A2
-3,Aluminio,AL-MS3-GRE97B,M. Silicona,Graco,987762,E97B,1990,F/S,Overhaul programado para 2026,Julio Bustos,A3
+3,Aluminio,AL-MS3-GRE97B,M. Silicona,Graco,987762,E97B,1990,EN MANT.,Overhaul programado para 2026,Julio Bustos,A3
 4,Aluminio,AL-MS1-GRH92B,M. Silicona,Graco,987762,H92B,1990,OP,,Julio Bustos,A3
 5,Aluminio,TP-MS2-GR7802,M. Silicona,Graco,987762,,1990,OP,,Julio Bustos,A3
 6,Aluminio,AL-CT2-EM0156,Cortadora,Emmegi,Classic vis TU/4,260156,2000,OP,,Julio Bustos,B2
@@ -13,6 +13,7 @@ n,area,tag,tipo,marca,modelo,serie,fabricacion,estado,diagnostico,responsable,pr
 12,Aluminio,AL-PG3-YI0040,Pantografo,Yilmaz,FR 221 S,6175230040,2023,OP,,Julio Bustos,C2
 13,Aluminio,AL-PL-CO0227,Palillera,Codmisa,C702,4920227,1992,OP,,Julio Bustos,C3
 14,Aluminio,AL-MT-TE7106,Matriz,Tekna,TK280,106,1999,OP,,Julio Bustos,C3
+98,Aluminio,TP-MS4-SHIET0,M. Silicona,ShinEtsu,SB200,200,2024,OP,,Julio Bustos,A3
 15,Corte,CT-CT4-TU0293,Cortadora,Turomas,LAM 110,293,2004,OP,,Carlos Caris,A1
 16,Corte,CT-MB2-HI3006,Mesa Basculante,Human Intelligent,LT-6133 D2,201505063006,2015,OP,,Carlos Caris,A1
 17,Corte,CT-MB1-HI3005,Mesa Basculante,Human Intelligent,LT-6133 D2,201505063005,2015,OP,,Carlos Caris,A1
@@ -23,10 +24,11 @@ n,area,tag,tipo,marca,modelo,serie,fabricacion,estado,diagnostico,responsable,pr
 22,Corte,CT-CT3-TU8077,Cortadora,Turomas,RUBI 516AC,MG 8077,2015,OP,,Carlos Caris,A2
 23,Corte,CT-CT2-LI0807,Cortadora,Lisec,GFB-60/30,034-030807,2006,OP,,Carlos Caris,A2
 24,Corte,CT-CT5-TU0636,Cortadora,Turomas,LAM 304,LM 0636,2017,OP,,Carlos Caris,A3
-25,Destaje,DT-LV-FO2500,Lavadora,Fortune,GCM2500H,4502500,2006,OP,,Carlos Caris,A3
+106,Despacho,DP-MV7-RI,Marco Ventosas,Rial,,,,OP,,Luis Bravo,C1
+25,Destaje,DT-TV-SCL816,Taladro,Schraml,TOP DRILL M-RX130,G5-MO43132VL816,2016,OP,,Roberth V. Felix N.,A3
 26,Destaje,DT-TD2-HG2401,Taladro,Hiseng Glass,HSO-02,16062401,2016,OP,,Carlos Caris,C1
 27,Destaje,DT-TD1-FD0023,Taladro,FDS Glass,ZYZ0222,10023,2013,OP,,Carlos Caris,C1
-28,Destaje,DT-TD3-FD0222,Taladro,FDS Glass,ZYZ0222,70024,2013,F/S,Cortocircuito y rectificacion de mandril,Carlos Caris,C1
+28,Destaje,DT-TD3-FD0222,Taladro,FDS Glass,ZYZ0222,70024,2013,EN MANT.,Overhaul,Carlos Caris,C1
 29,Horno,HN-HT-,T. Soplador,Glaston,,,2015,OP,,Julio Bustos,A1
 30,Horno,HN-HT-GL2446,Horno Tem.,Glaston,RC350-2446-380L,RC 1577,2015,OP,,Julio Bustos,A1
 31,Horno,HN-HT-UN0106,Horno Tem.,Uniglass,UGF 210X420-1,106,2006,OP,,Julio Bustos,A3
@@ -34,30 +36,39 @@ n,area,tag,tipo,marca,modelo,serie,fabricacion,estado,diagnostico,responsable,pr
 33,Horno,HN-HF-LG0012,Horno Fus.,Leader Glass,COMBI 3,12,2010,OP,,Julio Bustos,A3
 34,Impresión,IP-SC1-CE1604,Secador,Cefla,BEFG7500/2,6E016/04,2006,OP,,Julio Bustos,B3
 35,Impresión,IP-SC2-SH8228,Secador,Shenzhen,JS-GL2012IR,JP006078228,2006,OP,,Julio Bustos,B3
-36,Perifericos,PFA-CP-AC2545,Compresor,Atlas Copco,GA18,API462545,2011,F/S,Equipo desincorporado,Roberth V. Felix N.,A1
+107,Instalaciones,IT-MVB4-RI,Marco Ventosas,Rial,,,,OP,,Luis Bravo,C1
+108,Instalaciones,IT-MVG5-RI,Marco Ventosas,Rial,,,,OP,,,C2
+109,Instalaciones,IT-MV8-RI,Marco Ventosas,Tecnocat,,,,OP,,,C2
+110,Instalaciones,IT-MVL1-PG,Marco Ventosas,Power Grip,,,,F/S,,,C2
+111,Instalaciones,IT-MV2-PG,Marco Ventosas,Power Grip,,,,EN MANT.,,,C2
+112,Instalaciones,Por Definir,Marco Ventosas,,,,,STANDBY,Por Definir,,
+113,Instalaciones,Por Definir,Marco Ventosas,,,,,STANDBY,Por Definir,,
+36,Perifericos,PFA-CP-AC2545,Compresor,Atlas Copco,GA18,API462545,2011,STANDBY,Equipo desincorporado,Roberth V. Felix N.,A1
 37,Perifericos,PFV-DP5005,Depurador,Immmes,DGS350-5,1735005,2017,OP,,Julio Bustos,A1
 38,Perifericos,PFP-CP-AC6825,Compresor,Atlas Copco,GA22,API326825,2014,OP,,Roberth V. Felix N.,A2
 39,Perifericos,PFC-CP-AC7156,Compresor,Atlas Copco,GA75,API617156,2013,OP,,Roberth V. Felix N.,B1
-40,Perifericos,PFC-CP-SG0022,Compresor,Sergenin,SGD75,17100022,2021,OP,,Roberth V. Felix N.,B1
+40,Perifericos,PFC-CP-SG0022,Compresor,Sergenin,SGD75,17100022,2021,STANDBY,Equipo desincorporado,Roberth V. Felix N.,B1
 41,Perifericos,3.2t,Grua Puente,Inamar,,,2010,OP,,Roberth V. Felix N.,B1
 42,Perifericos,3.2t,Grua Puente,Inamar,,,2010,OP,,Roberth V. Felix N.,B1
 43,Perifericos,5t,Grua Puente,Inamar,,,2010,OP,,Roberth V. Felix N.,B2
 44,Perifericos,5t,Grua Puente,Inamar,,,2010,OP,,Roberth V. Felix N.,B2
-45,Perifericos,PFA-GN-OL0107,Generador,Olympian,,OLY00000HB4S00107,2010,F/S,Equipo desincorporado,Roberth V. Felix N.,B3
+45,Perifericos,PFA-GN-OL0107,Generador,Olympian,,OLY00000HB4S00107,2010,STANDBY,Equipo desincorporado,Roberth V. Felix N.,B3
 46,Perifericos,PFV-GN-IN0807,Generador,Inmesol,ID-250,619807,2007,OP,,Roberth V. Felix N.,B3
-47,Pulido,PU-PL1-FO3078,Pulidora,Forel,GM 4525 A1,P13078,2013,OP,,Carlos Caris,A1
-48,Pulido,PU-LV1-FO3084,Lavadora,Forel,VW 250E A1,P13084,2013,OP,,Carlos Caris,A1
+47,Pulido,PU-PL1-FO3078,Pulidora,Forel,GM 4525 A1,P13078,2013,OP,,Roberth V. Felix N.,A1
+48,Pulido,PU-LV1-FO3084,Lavadora,Forel,VW 250E A1,P13084,2013,OP,,Roberth V. Felix N.,A1
 49,Pulido,PU-PL2-BO7524,Pulidora Jum.,Bovone,ELB 102,61097524,2016,OP,,Carlos Caris,B2
 50,Pulido,PU-PL3-BV0209,Pulidora Ch.,Bavelloni,VE50011,110000209,2024,OP,,Carlos Caris,B2
 51,Pulido,PU-PL4-BV141,Pulidora Jum.,Bavelloni,VE50011,110000141,2024,OP,,Carlos Caris,B2
 52,Pulido,PU-PL5-BO8524,Pulidora Ch.,Bovone,ELB 102,61098524,2016,OP,,Carlos Caris,B2
-53,Pulido,PU-PC1-IT7290,Pulidora Canto,Intermac,Master 45,17290,2011,OP,,Carlos Caris,B2
-54,Pulido,PU-PC2-IT4273,Pulidora Canto,Intermac,Master 43,14273,2016,OP,,Carlos Caris,B2
+53,Pulido,PU-PC1-IT7290,Pulidora Canto,Intermac,Master 45,17290,2011,OP,,Roberth V. Felix N.,B2
+54,Pulido,PU-PC2-IT4273,Pulidora Cato,Intermac,Master 43,14273,2016,OP,,Roberth V. Felix N.,B2
 55,Pulido,PU-BS2-AD0340,Biseladora,A delo lattoada,GAMMA 8 PC,340,2010,OP,,Carlos Caris,B2
 56,Pulido,PU-BS1-BV6099,Biseladora,Bavelloni,TB 66 CN,2516099,1996,OP,,Carlos Caris,B2
-57,Pulido,PU-B1-BU2358,Bilateral,Busetti,FE10A DOUBLE,92358,2011,F/S,Maquina detenida hace 4 años,Carlos Caris,C1
+57,Pulido,PU-B1-BU2358,Bilateral,Busetti,FE10A DOUBLE,92358,2011,OP,Detenida por falta de carga,Roberth V. Felix N.,C1
 58,Pulido,PU-LV2-NE1102,Lavadora,Neptun,Tornado2364,521 10 2,2011,OP,,Carlos Caris,C1
 59,Pulido,PU-LV1-NE1101,Lavadora,Neptun,LV TOP 2662,521101,2011,OP,,Carlos Caris,C2
+103,Pulido,PU-CV1-TC3004,Carro Ventosas,Tecnocat,SL-MIDI,3004,2010,OP,,Luis Bravo,B1
+104,Pulido,PU-MV6-RI,Marco Ventosas,Rial,,,,OP,,Luis Bravo,C1
 60,PVC,PV-LP-UR1333,Limpiadora,Urban,TBA-F 30/35,2693,2012,OP,,Alvaro Peralta,A2
 61,PVC,PV-LP-UR1272,Limpiadora,Urban,SV530 B,531272,2012,OP,,Alvaro Peralta,A2
 62,PVC,PV-CT1-PE0118,Cortadora,Pertici,Univer-sc55,120118,2012,OP,,Alvaro Peralta,A3
@@ -77,10 +88,11 @@ n,area,tag,tipo,marca,modelo,serie,fabricacion,estado,diagnostico,responsable,pr
 76,PVC,PV-PG2-PE0101,Pantografo,Pertici,NSM1/3-A,05MA101,2005,OP,,Alvaro Peralta,C3
 77,PVC,PV-PG1-CM2307,Pantografo,Codmisa,P300-ZN,942307,1999,OP,,Alvaro Peralta,C3
 78,PVC,PV-SL3-BL1519,Soldadora,BlitzH,TTK556,41519,2023,OP,,Alvaro Peralta,B1
+101,PVC,PV-SL4-BL0746,Soldadora,BlitzH,TTK556,20240746,2024,STANDBY,Por Instalar,Alvaro Peralta,B1
 79,SunFlex,SF-CT-EM1908,Cortadora A.,Emmegi,SCA mini 400 P,C121908,2019,OP,,Julio Bustos,B3
 80,SunFlex,SF-PG2-YM0039,Pantografo,Yilmaz,FR 223 S,6203200039,2020,OP,,Julio Bustos,C1
 81,SunFlex,SF-PG1-YM0016,Pantografo,Yilmaz,FR 221S,617510016,2015,OP,,Julio Bustos,C1
-82,Termopanel,TP-DB-LI0196,Dobladora,Lisec,BSV 40,1542420200196,1996,OP,,Julio Bustos,A1
+82,Termopanel,TP-DB-LI0196,Dobladora,Lisec,BSV 40,1542420200196,1996,OP,,Julio Bustos,B1
 83,Termopanel,TP-SC1-LI0295,Prensa,Lisec,UKL-35/23,600750280295,1995,OP,,Julio Bustos,A1
 84,Termopanel,TP-LV1-LI06371,Lavadora,Lisec,RTL 25B,311006371,2001,OP,,Julio Bustos,A1
 85,Termopanel,TP-LV2-LI0811,Lavadora,Lisec,RTL 20VN,312030811,2006,OP,,Julio Bustos,A1
@@ -96,7 +108,8 @@ n,area,tag,tipo,marca,modelo,serie,fabricacion,estado,diagnostico,responsable,pr
 95,Termopanel,TP-MS-LI0295,Maq. Sal Man,Lisec,A4AL,1203250250295,1995,OP,,Julio Bustos,B1
 96,Termopanel,TP-MT1-LI0295,Mesa Giratoria,Lisec,ER-140,713050010295,1995,OP,,Julio Bustos,C3
 97,Termopanel,TP-MT2-LI0196,Mesa Giratoria,Lisec,ER-140,713150350196,1996,OP,,Julio Bustos,C3
-98,Termopanel,TP-MS4-SHIET0,M. Silicona,ShinEtsu,SB200,0,2024,OP,,Julio Bustos,A3
 99,Termopanel,TP-MS6-LI3980,M. Silicona,Lisec,TAL-50SI/B,364073980,2013,OP,,Julio Bustos,A3
 100,Termopanel,TP-MS7-LI8821,M. Silicona,Lisec,MSA-A30,364128821,2024,OP,,Julio Bustos,A3
-101,PVC,PV-SL4-BL0746,Soldadora,BlitzH,TTK556,20240746,2024,OP,,Alvaro Peralta,B1
+102,Termopanel,TP-CV2-TC1632,Carro Ventosas,Tecnocat,SL-MIDI,1632,2010,OP,,Luis Bravo,C2
+105,Termopanel,TP-MV3-RI,Marco Ventosas,Rial,,,,OP,,Luis Bravo,C1
+114,Termopanel,TP-DB2-FO7706,Dobladora,Forel,PBN.6.32,7977/06,2006,OP,,Julio Bustos,B1

@@ -1,5 +1,5 @@
 export type Role = 'admin' | 'mantenimiento' | 'supervisor' | 'consulta';
-export type AssetStatus = 'operativo' | 'fuera_servicio' | 'en_mantencion' | 'desincorporado';
+export type AssetStatus = 'operativo' | 'fuera_servicio' | 'en_mantencion' | 'standby' | 'desincorporado';
 export type Severity = 'urgente' | 'informativo';
 export type FailureStatus = 'abierto' | 'en_revision' | 'en_curso' | 'resuelto' | 'cerrado';
 export type WOType = 'correctivo' | 'preventivo';
@@ -14,10 +14,11 @@ export interface Asset {
 }
 export interface Assignment { id: string; profile_id: string; asset_id: string | null; area_id: string | null }
 export interface Failure {
-  id: string; asset_id: string; reportado_por: string; severidad: Severity;
+  id: string; numero: number; asset_id: string; reportado_por: string; severidad: Severity;
   detiene_produccion: boolean; inicio_detencion: string | null; liberacion: string | null;
   descripcion: string; causa_inmediata: string; extra: Record<string, string>;
   estado: FailureStatus; fotos: string[]; creado: string;
+  fecha_inicio_solucion: string | null; nota_status: string; nota_solucion: string; encargado_id: string | null;
 }
 export interface Feedback { id: string; failure_id: string; autor: string; comentario: string; estado: FailureStatus | null; creado: string }
 export interface Plan {

@@ -29,6 +29,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const { data: s } = await supabase.auth.getSession();
     const email = s.session?.user.email;
     if (!email) return setMe(null);
+    await supabase.rpc('claim_profile'); // enlaza el perfil precargado con este usuario M365
     const profiles = await list('profiles');
     let p = profiles.find((x) => x.email.toLowerCase() === email.toLowerCase());
     if (!p) {

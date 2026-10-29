@@ -13,10 +13,18 @@ export function parseInventory(text: string) {
   });
 }
 
+export function mapStatus(estado: string, diagnostico: string): Asset['estado'] {
+  const e = estado.trim().toUpperCase();
+  if (e === 'OP') return 'operativo';
+  if (e === 'EN MANT.') return 'en_mantencion';
+  if (e === 'STANDBY') return 'standby';
+  return diagnostico.toLowerCase().includes('desincorporado') ? 'desincorporado' : 'fuera_servicio';
+}
+
 export function buildSeed() {
   const rows = parseInventory(csv);
   const areas: Area[] = [...new Set(rows.map((r) => r.area))].map((nombre) => ({ id: `area-${slug(nombre)}`, nombre }));
-  const people = [...new Set(rows.map((r) => r.responsable))];
+  const people = [...new Set(rows.map((r) => r.responsable).filter(Boolean))];
   const profiles: Profile[] = [
     { id: 'u-admin', nombre: 'Administrador GMM', email: 'admin@glasstech.cl', rol: 'admin' },
     { id: 'u-mant', nombre: 'Equipo Mantenimiento', email: 'mantenimiento@glasstech.cl', rol: 'mantenimiento' },
@@ -25,9 +33,9 @@ export function buildSeed() {
   const assets: Asset[] = rows.map((r) => ({
     id: `a-${r.n}`, parent_id: null, area_id: `area-${slug(r.area)}`, tag: r.tag, tipo: r.tipo, marca: r.marca,
     modelo: r.modelo, serie: r.serie, anio_fab: r.fabricacion ? Number(r.fabricacion) : null,
-    estado: r.estado === 'OP' ? 'operativo' : r.diagnostico.toLowerCase().includes('desincorporado') ? 'desincorporado' : 'fuera_servicio',
+    estado: mapStatus(r.estado, r.diagnostico),
     criticidad: r.prioridad, diagnostico: r.diagnostico, es_componente: false,
   }));
-  const assignments: Assignment[] = rows.map((r) => ({ id: `as-${r.n}`, profile_id: `u-${slug(r.responsable)}`, asset_id: `a-${r.n}`, area_id: null }));
+  const assignments: Assignment[] = rows.filter((r) => r.responsable).map((r) => ({ id: `as-${r.n}`, profile_id: `u-${slug(r.responsable)}`, asset_id: `a-${r.n}`, area_id: null }));
   return { areas, profiles, assets, assignments };
 }

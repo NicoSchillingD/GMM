@@ -57,7 +57,7 @@ export default function Assets() {
       <div className="card row" style={{ marginBottom: 16 }}>
         <input style={{ maxWidth: 260 }} placeholder="Buscar TAG, tipo, marca…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select style={{ maxWidth: 200 }} value={area} onChange={(e) => setArea(e.target.value)}><option value="">Todas las áreas</option>{data.areas.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}</select>
-        <select style={{ maxWidth: 200 }} value={st} onChange={(e) => setSt(e.target.value)}><option value="">Todos los estados</option><option value="operativo">Operativo</option><option value="fuera_servicio">Fuera de servicio</option><option value="en_mantencion">En mantención</option><option value="desincorporado">Desincorporado</option></select>
+        <select style={{ maxWidth: 200 }} value={st} onChange={(e) => setSt(e.target.value)}><option value="">Todos los estados</option><option value="operativo">Operativo</option><option value="fuera_servicio">Fuera de servicio</option><option value="en_mantencion">En mantención</option><option value="standby">Standby</option><option value="desincorporado">Desincorporado</option></select>
         <span className="muted">{data.assets.filter(match).length} de {data.assets.length}</span>
       </div>
 
@@ -69,7 +69,7 @@ export default function Assets() {
             <label className="f">Año fabricación<input type="number" value={edit.anio_fab ?? ''} onChange={(e) => setEdit({ ...edit, anio_fab: e.target.value ? Number(e.target.value) : null })} /></label>
             <label className="f">Criticidad<input value={edit.criticidad} placeholder="A1…C3" onChange={(e) => setEdit({ ...edit, criticidad: e.target.value })} /></label>
             <label className="f">Área<select value={edit.area_id ?? ''} onChange={(e) => setEdit({ ...edit, area_id: e.target.value || null })}><option value="">—</option>{data.areas.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}</select></label>
-            <label className="f">Estado<select value={edit.estado} onChange={(e) => setEdit({ ...edit, estado: e.target.value as AssetStatus })}><option value="operativo">Operativo</option><option value="fuera_servicio">Fuera de servicio</option><option value="en_mantencion">En mantención</option><option value="desincorporado">Desincorporado</option></select></label>
+            <label className="f">Estado<select value={edit.estado} onChange={(e) => setEdit({ ...edit, estado: e.target.value as AssetStatus })}><option value="operativo">Operativo</option><option value="fuera_servicio">Fuera de servicio</option><option value="en_mantencion">En mantención</option><option value="standby">Standby</option><option value="desincorporado">Desincorporado</option></select></label>
             <label className="f">Anidar bajo<select value={edit.parent_id ?? ''} onChange={(e) => setEdit({ ...edit, parent_id: e.target.value || null })}><option value="">(ninguno · activo raíz)</option>{data.assets.filter((a) => a.id !== edit.id).map((a) => <option key={a.id} value={a.id}>{a.tag || 'S/TAG'} · {a.tipo}</option>)}</select></label>
           </div>
           <label className="f">Diagnóstico / notas<textarea value={edit.diagnostico} onChange={(e) => setEdit({ ...edit, diagnostico: e.target.value })} /></label>

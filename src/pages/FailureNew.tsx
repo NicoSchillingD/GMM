@@ -55,9 +55,10 @@ export default function FailureNew() {
         }));
       }
       const row: Failure = {
-        id, asset_id: assetId, reportado_por: me!.id, severidad: sev, detiene_produccion: urgent,
+        id, numero: Math.max(0, ...data.failures.map((x) => x.numero)) + 1, asset_id: assetId, reportado_por: me!.id, severidad: sev, detiene_produccion: urgent,
         inicio_detencion: urgent ? new Date(inicio).toISOString() : null, liberacion: null,
         descripcion: desc.trim(), causa_inmediata: causa.trim(), extra, estado: 'abierto', fotos: urls, creado: new Date().toISOString(),
+        fecha_inicio_solucion: null, nota_status: '', nota_solucion: '', encargado_id: null,
       };
       await insert('failures', row);
       if (urgent) { await askNotifyPermission(); notifyLocal('Falla URGENTE', assetLabel(data.assets.find((a) => a.id === assetId))); }
