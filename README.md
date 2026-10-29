@@ -13,7 +13,7 @@ npm test && npm run build
 ```
 
 ## Supabase (ya conectado)
-Proyecto `rhwfkdtbjpahfnwnrelv`: tablas, RLS, bucket `failure-photos` y datos iniciales (12 áreas, 114 activos, asignaciones) aplicados con las migraciones de `supabase/migrations/`. `.env` (no versionado) lleva `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
+Proyecto `rhwfkdtbjpahfnwnrelv`: tablas, RLS, bucket `failure-photos` y datos iniciales (12 áreas, 114 activos, asignaciones) aplicados con las migraciones de `supabase/migrations/`. Para recrearlo en otro proyecto: `SUPABASE_ACCESS_TOKEN=… [SUPABASE_PROJECT_REF=…] scripts/setup-supabase.sh` (usa la API de administración; no requiere `psql` ni contraseña de Postgres). `.env` (no versionado) lleva `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
 
 **Acceso:** correo corporativo y contraseña; no hay registro público ni Microsoft 365. El administrador crea los usuarios en la pantalla *Usuarios* (función `admin-create-user`) o en Supabase → Authentication → Users → Add user. Al primer ingreso el usuario se enlaza por correo con su perfil precargado. Los correos de los supervisores del seed son provisionales: reemplázalos por los reales.
 
