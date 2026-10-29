@@ -13,7 +13,7 @@ npm test && npm run build
 ```
 
 ## Conectar Supabase + Microsoft 365
-1. Crear proyecto Supabase y ejecutar `SUPABASE_DB_URL='postgresql://…' scripts/setup-supabase.sh` (migraciones + seed de 114 activos), o pegar `supabase/migrations/0001_init.sql` y `supabase/seed/seed.sql` (generar con `node scripts/build-seed-sql.mjs`) en el SQL Editor.
+1. Crear proyecto Supabase y ejecutar `SUPABASE_ACCESS_TOKEN=… [SUPABASE_PROJECT_REF=…] scripts/setup-supabase.sh` (usa la API de administración; migraciones + seed de 114 activos), o pegar `supabase/migrations/0001_init.sql` y `supabase/seed/seed.sql` (generar con `node scripts/build-seed-sql.mjs`) en el SQL Editor.
 2. El inventario sale de `data/inventory.csv` (planilla Taxonomía Equipos Glasstech; TAGs duplicados/vacíos se conservan para revisión). Los correos de los responsables son provisionales (`nombre-apellido@glasstech.cl`): corrígelos en Usuarios o en la tabla `profiles`; al ingresar con M365 el perfil se enlaza por correo.
 3. Authentication → Providers → Azure: registrar app en Entra ID (tenant Glasstech) y pegar client id/secret.
 4. Copiar `.env.example` a `.env` con `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
