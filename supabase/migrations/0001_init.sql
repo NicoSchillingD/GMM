@@ -56,9 +56,8 @@ do $$ declare t text; begin
     execute format($f$create policy "gestion" on %I for all to authenticated using (gmm_role() in ('admin','mantenimiento')) with check (gmm_role() in ('admin','mantenimiento'))$f$, t);
   end loop;
 end $$;
--- Solo admin gestiona perfiles y asignaciones; cada usuario puede crear su propio perfil (rol consulta) al primer ingreso
+-- Solo admin gestiona perfiles y asignaciones (los usuarios se crean manualmente; no hay auto-registro)
 create policy "admin perfiles" on profiles for all to authenticated using (gmm_role() = 'admin') with check (gmm_role() = 'admin');
-create policy "auto perfil" on profiles for insert to authenticated with check (id = auth.uid() and rol = 'consulta');
 create policy "admin asignaciones" on assignments for all to authenticated using (gmm_role() = 'admin') with check (gmm_role() = 'admin');
 -- Fallas: supervisores y mantenimiento reportan; mantenimiento actualiza estado
 create policy "reportar" on failures for insert to authenticated with check (gmm_role() in ('admin','mantenimiento','supervisor') and reportado_por = auth.uid());
