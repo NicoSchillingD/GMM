@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { isDemo, list, supabase, insert, uid } from './db';
+import { isDemo, list, supabase, uid } from './db';
 import type { Profile, Tables, TableName } from './types';
 
 type Data = { [K in TableName]: Tables[K][] };
@@ -8,7 +8,7 @@ const NAMES = Object.keys(empty) as TableName[];
 
 interface Ctx {
   data: Data; me: Profile | null; loading: boolean; reload: () => Promise<void>;
-  signIn: (profileId?: string) => Promise<void>; signOut: () => Promise<void>;
+  signIn: (idOrEmail: string, password?: string) => Promise<string | null>; resetPassword: (email: string) => Promise<string | null>; signOut: () => Promise<void>;
   can: (...roles: Profile['rol'][]) => boolean;
 }
 const C = createContext<Ctx>(null!);
@@ -31,11 +31,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!email) return setMe(null);
     await supabase.rpc('claim_profile'); // enlaza el perfil precargado con este usuario M365
     const profiles = await list('profiles');
-    let p = profiles.find((x) => x.email.toLowerCase() === email.toLowerCase());
-    if (!p) {
-      // Primer ingreso: rol mínimo; un admin lo eleva desde Usuarios.
-      p = await insert('profiles', { id: s.session!.user.id, nombre: s.session!.user.user_metadata?.full_name ?? email, email, rol: 'consulta' });
-    }
+    const p = profiles.find((x) => x.email.toLowerCase() === email.toLowerCase());
+    // Sin auto-registro: si el correo no tiene perfil, no hay acceso.
+    if (!p) { await supabase.auth.signOut(); return setMe(null); }
     setMe(p);
   }, []);
 
@@ -55,13 +53,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })();
   }, [reload, resolveSupabaseUser]);
 
-  const signIn = async (profileId?: string) => {
+  const signIn = async (idOrEmail: string, password?: string): Promise<string | null> => {
     if (isDemo) {
-      localStorage.setItem('gmm-demo-user', profileId!);
-      setMe(data.profiles.find((p) => p.id === profileId) ?? null);
-    } else {
-      await supabase!.auth.signInWithOAuth({ provider: 'azure', options: { scopes: 'email profile', redirectTo: location.origin } });
+      localStorage.setItem('gmm-demo-user', idOrEmail);
+      setMe(data.profiles.find((p) => p.id === idOrEmail) ?? null);
+      return null;
     }
+    const { error } = await supabase!.auth.signInWithPassword({ email: idOrEmail.trim(), password: password ?? '' });
+    if (error) return 'Correo o contraseña incorrectos.';
+    await resolveSupabaseUser();
+    await reload();
+    return null;
+  };
+  const resetPassword = async (email: string): Promise<string | null> => {
+    if (isDemo) return null;
+    const { error } = await supabase!.auth.resetPasswordForEmail(email.trim(), { redirectTo: location.origin });
+    return error ? 'No se pudo enviar el correo.' : null;
   };
   const signOut = async () => {
     if (isDemo) localStorage.removeItem('gmm-demo-user'); else await supabase!.auth.signOut();
@@ -69,6 +76,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
   const can = (...roles: Profile['rol'][]) => !!me && (me.rol === 'admin' || roles.includes(me.rol));
 
-  return <C.Provider value={{ data, me, loading, reload, signIn, signOut, can }}>{children}</C.Provider>;
+  return <C.Provider value={{ data, me, loading, reload, signIn, resetPassword, signOut, can }}>{children}</C.Provider>;
 }
 export { uid };

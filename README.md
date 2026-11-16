@@ -12,11 +12,10 @@ npm run dev          # modo demo (datos locales, 114 activos del inventario)
 npm test && npm run build
 ```
 
-## Conectar Supabase + Microsoft 365
-1. Crear proyecto Supabase y ejecutar `SUPABASE_DB_URL='postgresql://…' scripts/setup-supabase.sh` (migraciones + seed de 114 activos), o pegar `supabase/migrations/0001_init.sql` y `supabase/seed/seed.sql` (generar con `node scripts/build-seed-sql.mjs`) en el SQL Editor.
-2. El inventario sale de `data/inventory.csv` (planilla Taxonomía Equipos Glasstech; TAGs duplicados/vacíos se conservan para revisión). Los correos de los responsables son provisionales (`nombre-apellido@glasstech.cl`): corrígelos en Usuarios o en la tabla `profiles`; al ingresar con M365 el perfil se enlaza por correo.
-3. Authentication → Providers → Azure: registrar app en Entra ID (tenant Glasstech) y pegar client id/secret.
-4. Copiar `.env.example` a `.env` con `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
+## Supabase (ya conectado)
+Proyecto `rhwfkdtbjpahfnwnrelv`: tablas, RLS, bucket `failure-photos` y datos iniciales (12 áreas, 114 activos, asignaciones) aplicados con las migraciones de `supabase/migrations/`. `.env` (no versionado) lleva `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
+
+**Acceso:** correo corporativo y contraseña; no hay registro público ni Microsoft 365. El administrador crea los usuarios en la pantalla *Usuarios* (función `admin-create-user`) o en Supabase → Authentication → Users → Add user. Al primer ingreso el usuario se enlaza por correo con su perfil precargado. Los correos de los supervisores del seed son provisionales: reemplázalos por los reales.
 
 ## Pendiente
 - Web Push multiusuario (Edge Function) y cola offline de reportes.

@@ -1,19 +1,31 @@
 import { useState } from 'react';
 import { useApp } from '../lib/app';
-import { insert, remove, uid, update } from '../lib/db';
+import { insert, isDemo, remove, supabase, uid, update } from '../lib/db';
 import type { Role } from '../lib/types';
 
 export default function UsersPage() {
   const { data, reload } = useApp();
   const [sel, setSel] = useState<string | null>(null);
   const [asg, setAsg] = useState({ kind: 'area', target: '' });
-  const [nu, setNu] = useState({ nombre: '', email: '', rol: 'supervisor' as Role });
+  const [nu, setNu] = useState({ nombre: '', email: '', rol: 'supervisor' as Role, password: '' });
+  const [msg, setMsg] = useState('');
   const mine = data.assignments.filter((a) => a.profile_id === sel);
   const label = (a: typeof mine[number]) => a.asset_id ? data.assets.find((x) => x.id === a.asset_id)?.tag || 'S/TAG' : `Área ${data.areas.find((x) => x.id === a.area_id)?.nombre}`;
   const assign = async () => {
     if (!sel || !asg.target) return;
     await insert('assignments', { id: uid(), profile_id: sel, asset_id: asg.kind === 'activo' ? asg.target : null, area_id: asg.kind === 'area' ? asg.target : null });
     await reload();
+  };
+  const create = async () => {
+    if (!nu.nombre || !nu.email) return setMsg('Completa nombre y correo.');
+    setMsg('');
+    if (isDemo) await insert('profiles', { id: uid(), nombre: nu.nombre, email: nu.email, rol: nu.rol });
+    else {
+      const { data: r, error } = await supabase!.functions.invoke('admin-create-user', { body: nu });
+      if (error || r?.error) return setMsg(r?.error ?? 'No se pudo crear el usuario.');
+      setMsg('Usuario creado. Entrégale su contraseña inicial.');
+    }
+    setNu({ nombre: '', email: '', rol: 'supervisor', password: '' }); await reload();
   };
   return (
     <>
@@ -30,8 +42,11 @@ export default function UsersPage() {
           <div className="row" style={{ marginTop: 8 }}>
             <input style={{ maxWidth: 160 }} placeholder="Nombre" value={nu.nombre} onChange={(e) => setNu({ ...nu, nombre: e.target.value })} />
             <input style={{ maxWidth: 200 }} placeholder="correo@glasstech.cl" value={nu.email} onChange={(e) => setNu({ ...nu, email: e.target.value })} />
-            <button className="btn sec" onClick={async () => { if (!nu.nombre || !nu.email) return; await insert('profiles', { id: uid(), ...nu }); setNu({ nombre: '', email: '', rol: 'supervisor' }); await reload(); }}>Agregar</button>
+            <select style={{ maxWidth: 140 }} value={nu.rol} onChange={(e) => setNu({ ...nu, rol: e.target.value as Role })}><option value="admin">Admin</option><option value="mantenimiento">Mantenimiento</option><option value="supervisor">Supervisor</option><option value="consulta">Consulta</option></select>
+            {!isDemo && <input style={{ maxWidth: 170 }} type="text" placeholder="Contraseña inicial (8+)" value={nu.password} onChange={(e) => setNu({ ...nu, password: e.target.value })} />}
+            <button className="btn sec" onClick={create}>Crear usuario</button>
           </div>
+          {msg && <div className="alert" style={{ marginTop: 8 }}>{msg}</div>}
         </div>
         <div className="card"><h2>Asignaciones {sel && `· ${data.profiles.find((p) => p.id === sel)?.nombre}`}</h2>
           {!sel ? <p className="muted">Selecciona un perfil.</p> : <>
