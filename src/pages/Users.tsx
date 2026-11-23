@@ -1,14 +1,61 @@
 import { useState } from 'react';
 import { useApp } from '../lib/app';
 import { insert, isDemo, remove, supabase, uid, update } from '../lib/db';
-import type { Role } from '../lib/types';
+import type { Profile, Role } from '../lib/types';
 
 export default function UsersPage() {
-  const { data, reload } = useApp();
+  const { data, me, reload } = useApp();
   const [sel, setSel] = useState<string | null>(null);
   const [asg, setAsg] = useState({ kind: 'area', target: '' });
   const [nu, setNu] = useState({ nombre: '', email: '', rol: 'supervisor' as Role, password: '' });
   const [msg, setMsg] = useState('');
+  const [ed, setEd] = useState<{ nombre: string; email: string; rol: Role } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const pick = (p: Profile) => { setSel(p.id); setEd({ nombre: p.nombre, email: p.email, rol: p.rol }); setMsg(''); };
+  const admins = data.profiles.filter((p) => p.rol === 'admin');
+
+  /** Edita o elimina un perfil. En Supabase pasa por la función de servidor (que también cambia/elimina el acceso). */
+  const manage = async (action: 'update' | 'delete', p: Profile, v?: { nombre: string; email: string; rol: Role }): Promise<boolean> => {
+    setBusy(true); setMsg('');
+    try {
+      if (isDemo) {
+        const lastAdmin = p.rol === 'admin' && admins.length === 1;
+        if (action === 'delete') {
+          if (p.id === me!.id) return fail('No puedes eliminar tu propio perfil.');
+          if (lastAdmin) return fail('Debe quedar al menos un administrador.');
+          const hist = data.failures.filter((f) => f.reportado_por === p.id).length + data.feedback.filter((f) => f.autor === p.id).length;
+          if (hist) return fail('Tiene reportes o comentarios de falla; cámbiale el rol a "Consulta" en su lugar.');
+          data.assignments.filter((a) => a.profile_id === p.id).forEach((a) => void remove('assignments', a.id));
+          await remove('profiles', p.id);
+        } else {
+          if (lastAdmin && v!.rol !== 'admin') return fail('Debe quedar al menos un administrador.');
+          if (data.profiles.some((x) => x.id !== p.id && x.email.toLowerCase() === v!.email.toLowerCase())) return fail('Ese correo ya pertenece a otro perfil.');
+          await update('profiles', p.id, v!);
+        }
+      } else {
+        const { data: r, error } = await supabase!.functions.invoke('admin-manage-user', { body: { action, id: p.id, ...v } });
+        // Las respuestas 4xx traen el motivo en el cuerpo de la respuesta
+        let reason: string | undefined = r?.error;
+        if (!reason && error && 'context' in error) reason = (await (error as { context: Response }).context.json().catch(() => null))?.error;
+        if (error || r?.error) return fail(reason ?? 'No se pudo completar la acción.');
+      }
+      await reload();
+      return true;
+    } finally { setBusy(false); }
+    function fail(m: string) { setMsg(m); return false; }
+  };
+  const save = async () => {
+    const p = data.profiles.find((x) => x.id === sel);
+    if (!p || !ed) return;
+    if (!ed.nombre.trim() || !ed.email.trim()) return setMsg('Completa nombre y correo.');
+    if (await manage('update', p, { ...ed, nombre: ed.nombre.trim(), email: ed.email.trim() })) { setMsg('Cambios guardados.'); setEd({ ...ed, nombre: ed.nombre.trim(), email: ed.email.trim() }); }
+  };
+  const del = async () => {
+    const p = data.profiles.find((x) => x.id === sel);
+    if (!p) return;
+    if (!window.confirm(`¿Eliminar a ${p.nombre} (${p.email})? Perderá su acceso a GMM y sus asignaciones. No se puede deshacer.`)) return;
+    if (await manage('delete', p)) { setSel(null); setEd(null); setMsg('Perfil eliminado.'); }
+  };
   const mine = data.assignments.filter((a) => a.profile_id === sel);
   const label = (a: typeof mine[number]) => a.asset_id ? data.assets.find((x) => x.id === a.asset_id)?.tag || 'S/TAG' : `Área ${data.areas.find((x) => x.id === a.area_id)?.nombre}`;
   const assign = async () => {
@@ -33,11 +80,24 @@ export default function UsersPage() {
       <div className="grid g2">
         <div className="card"><h2>Perfiles</h2>
           <table><tbody>{data.profiles.map((p) => (
-            <tr key={p.id} className="click" onClick={() => setSel(p.id)} style={{ background: sel === p.id ? 'var(--sky-100)' : undefined }}>
+            <tr key={p.id} className="click" onClick={() => pick(p)} style={{ background: sel === p.id ? 'var(--sky-100)' : undefined }}>
               <td><b>{p.nombre}</b><div className="muted">{p.email}</div></td>
-              <td><select value={p.rol} onClick={(e) => e.stopPropagation()} onChange={async (e) => { await update('profiles', p.id, { rol: e.target.value as Role }); await reload(); }}><option value="admin">Admin</option><option value="mantenimiento">Mantenimiento</option><option value="supervisor">Supervisor</option><option value="consulta">Consulta</option></select></td>
+              <td><select value={p.rol} onClick={(e) => e.stopPropagation()} onChange={async (e) => { const rol = e.target.value as Role; if (await manage('update', p, { nombre: p.nombre, email: p.email, rol }) && sel === p.id) setEd((x) => x && { ...x, rol }); }}><option value="admin">Admin</option><option value="mantenimiento">Mantenimiento</option><option value="supervisor">Supervisor</option><option value="consulta">Consulta</option></select></td>
               <td className="muted">{data.assignments.filter((a) => a.profile_id === p.id).length} asig.</td></tr>
           ))}</tbody></table>
+          {sel && ed && <div className="form" style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border-1)' }}>
+            <h3>Editar perfil</h3>
+            <div className="grid g4">
+              <label className="f">Nombre<input value={ed.nombre} onChange={(e) => setEd({ ...ed, nombre: e.target.value })} /></label>
+              <label className="f">Correo<input type="email" value={ed.email} onChange={(e) => setEd({ ...ed, email: e.target.value })} /></label>
+              <label className="f">Rol<select value={ed.rol} onChange={(e) => setEd({ ...ed, rol: e.target.value as Role })}><option value="admin">Admin</option><option value="mantenimiento">Mantenimiento</option><option value="supervisor">Supervisor</option><option value="consulta">Consulta</option></select></label>
+            </div>
+            <div className="row">
+              <button className="btn" disabled={busy} onClick={save}>Guardar cambios</button>
+              <button className="btn danger" disabled={busy || sel === me!.id} title={sel === me!.id ? 'No puedes eliminar tu propio perfil' : undefined} onClick={del}>Eliminar perfil</button>
+              <button className="btn ghost" onClick={() => { setSel(null); setEd(null); }}>Cerrar</button>
+            </div>
+          </div>}
           <h3 style={{ marginTop: 16 }}>Nuevo perfil</h3>
           <div className="row" style={{ marginTop: 8 }}>
             <input style={{ maxWidth: 160 }} placeholder="Nombre" value={nu.nombre} onChange={(e) => setNu({ ...nu, nombre: e.target.value })} />
