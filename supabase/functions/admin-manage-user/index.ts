@@ -1,4 +1,4 @@
-// Edita o elimina un perfil (y su usuario de acceso). Solo puede invocarlo un admin de GMM.
+// Edita, elimina o cambia la contraseña de un perfil (y su usuario de acceso). Solo puede invocarlo un admin de GMM.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const cors = {
@@ -20,14 +20,22 @@ Deno.serve(async (req) => {
   const { data: me } = await admin.from('profiles').select('rol').eq('id', caller.user.id).maybeSingle();
   if (me?.rol !== 'admin') return json({ error: 'Solo administradores' }, 403);
 
-  const { action, id, nombre, email, rol } = await req.json().catch(() => ({}));
-  if (!['update', 'delete'].includes(action) || typeof id !== 'string') return json({ error: 'Solicitud inválida' }, 400);
+  const { action, id, nombre, email, rol, password } = await req.json().catch(() => ({}));
+  if (!['update', 'delete', 'set-password'].includes(action) || typeof id !== 'string') return json({ error: 'Solicitud inválida' }, 400);
   const { data: target } = await admin.from('profiles').select('id, nombre, email, rol').eq('id', id).maybeSingle();
   if (!target) return json({ error: 'Perfil no encontrado' }, 404);
 
   const otherAdmins = async () =>
     (await admin.from('profiles').select('id', { count: 'exact', head: true }).eq('rol', 'admin').neq('id', id)).count ?? 0;
   const noAuthUser = (e: { status?: number; code?: string } | null) => !!e && (e.status === 404 || e.code === 'user_not_found');
+
+  if (action === 'set-password') {
+    if (typeof password !== 'string' || password.length < 8) return json({ error: 'La contraseña debe tener 8 o más caracteres.' }, 400);
+    const { error } = await admin.auth.admin.updateUserById(id, { password });
+    if (noAuthUser(error)) return json({ error: 'Este perfil aún no tiene acceso; créalo con "Crear usuario" usando su correo.' }, 404);
+    if (error) return json({ error: error.message }, 400);
+    return json({ ok: true });
+  }
 
   if (action === 'delete') {
     if (id === caller.user.id) return json({ error: 'No puedes eliminar tu propio perfil.' }, 400);

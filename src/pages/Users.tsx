@@ -4,14 +4,15 @@ import { insert, isDemo, remove, supabase, uid, update } from '../lib/db';
 import type { Profile, Role } from '../lib/types';
 
 export default function UsersPage() {
-  const { data, me, reload } = useApp();
+  const { data, me, reload, can } = useApp();
   const [sel, setSel] = useState<string | null>(null);
   const [asg, setAsg] = useState({ kind: 'area', target: '' });
   const [nu, setNu] = useState({ nombre: '', email: '', rol: 'supervisor' as Role, password: '' });
   const [msg, setMsg] = useState('');
   const [ed, setEd] = useState<{ nombre: string; email: string; rol: Role } | null>(null);
   const [busy, setBusy] = useState(false);
-  const pick = (p: Profile) => { setSel(p.id); setEd({ nombre: p.nombre, email: p.email, rol: p.rol }); setMsg(''); };
+  const [pw, setPw] = useState('');
+  const pick = (p: Profile) => { setSel(p.id); setPw(''); setEd({ nombre: p.nombre, email: p.email, rol: p.rol }); setMsg(''); };
   const admins = data.profiles.filter((p) => p.rol === 'admin');
 
   /** Edita o elimina un perfil. En Supabase pasa por la función de servidor (que también cambia/elimina el acceso). */
@@ -49,6 +50,21 @@ export default function UsersPage() {
     if (!p || !ed) return;
     if (!ed.nombre.trim() || !ed.email.trim()) return setMsg('Completa nombre y correo.');
     if (await manage('update', p, { ...ed, nombre: ed.nombre.trim(), email: ed.email.trim() })) { setMsg('Cambios guardados.'); setEd({ ...ed, nombre: ed.nombre.trim(), email: ed.email.trim() }); }
+  };
+  /** Solo administradores: asigna una contraseña nueva al acceso del perfil (la valida también el servidor). */
+  const setPassword = async () => {
+    const p = data.profiles.find((x) => x.id === sel);
+    if (!p || !can()) return;
+    if (pw.length < 8) return setMsg('La contraseña debe tener 8 o más caracteres.');
+    if (!window.confirm(`¿Cambiar la contraseña de ${p.nombre}? La anterior dejará de funcionar.`)) return;
+    setBusy(true); setMsg('');
+    try {
+      const { data: r, error } = await supabase!.functions.invoke('admin-manage-user', { body: { action: 'set-password', id: p.id, password: pw } });
+      let reason: string | undefined = r?.error;
+      if (!reason && error && 'context' in error) reason = (await (error as { context: Response }).context.json().catch(() => null))?.error;
+      if (error || r?.error) return setMsg(reason ?? 'No se pudo cambiar la contraseña.');
+      setPw(''); setMsg(`Contraseña de ${p.nombre} actualizada. Entrégasela por un canal seguro.`);
+    } finally { setBusy(false); }
   };
   const del = async () => {
     const p = data.profiles.find((x) => x.id === sel);
@@ -92,6 +108,10 @@ export default function UsersPage() {
               <label className="f">Correo<input type="email" value={ed.email} onChange={(e) => setEd({ ...ed, email: e.target.value })} /></label>
               <label className="f">Rol<select value={ed.rol} onChange={(e) => setEd({ ...ed, rol: e.target.value as Role })}><option value="admin">Admin</option><option value="mantenimiento">Mantenimiento</option><option value="supervisor">Supervisor</option><option value="consulta">Consulta</option></select></label>
             </div>
+            {can() && !isDemo && <div className="row" style={{ alignItems: 'flex-end' }}>
+              <label className="f" style={{ maxWidth: 260 }}>Nueva contraseña (8+)<input type="text" autoComplete="off" value={pw} onChange={(e) => setPw(e.target.value)} /></label>
+              <button className="btn sec" disabled={busy || pw.length < 8} onClick={setPassword}>Cambiar contraseña</button>
+            </div>}
             <div className="row">
               <button className="btn" disabled={busy} onClick={save}>Guardar cambios</button>
               <button className="btn danger" disabled={busy || sel === me!.id} title={sel === me!.id ? 'No puedes eliminar tu propio perfil' : undefined} onClick={del}>Eliminar perfil</button>
