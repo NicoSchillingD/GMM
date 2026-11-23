@@ -97,6 +97,8 @@ export default function FailureNew() {
         <label className="f">Activo / componente
           <input placeholder="Buscar por TAG, tipo o marca…" value={q} onChange={(e) => setQ(e.target.value)} />
           <select size={5} value={assetId} onChange={(e) => setAssetId(e.target.value)} style={{ height: 150 }}>
+            {/* Sin esta opción vacía React preselecciona visualmente la primera, y tocarla no dispara el cambio */}
+            <option value="" disabled hidden />
             {options.map((a) => <option key={a.id} value={a.id}>{assetLabel(a)}{a.parent_id ? ' (componente)' : ''}</option>)}
           </select>
         </label>
