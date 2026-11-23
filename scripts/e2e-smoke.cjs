@@ -5,7 +5,7 @@ const { chromium } = require('playwright');
   p.on('pageerror', (e) => errs.push(e.message)); p.on('console', (m) => m.type() === 'error' && errs.push(m.text()));
   await p.goto('http://localhost:4173/'); await p.click('text=Julio Bustos');
   await p.click('.tabbar a:has-text("Fallas")'); await p.click('text=Reportar falla');
-  await p.click('button:has-text("Urgente")'); await p.fill('input[placeholder^="Buscar"]', 'AL-MC');
+  await p.click('text=Enviar reporte'); await p.waitForSelector('text=Indica si la máquina queda detenida'); await p.click('button:has-text("Sí, queda detenida")'); await p.fill('input[placeholder^="Buscar"]', 'AL-MC');
   await p.selectOption('select >> nth=0', { index: 0 });
   await p.fill('textarea >> nth=0', 'Se detuvo el cabezal');
   await p.setInputFiles('input[capture]', { name: 'f.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64') });
