@@ -1,9 +1,10 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Camera, Image as ImageIcon, X } from 'lucide-react';
+import CameraCapture from '../components/CameraCapture';
 import { useApp } from '../lib/app';
 import { insert, uid, isDemo, supabase } from '../lib/db';
-import { assetLabel, compressImage } from '../lib/ui';
+import { MAX_PHOTOS, assetLabel, compressImage } from '../lib/ui';
 import { failureExtraFields } from '../config/failureFields';
 import { notifyLocal, askNotifyPermission } from '../lib/notify';
 import type { Failure } from '../lib/types';
@@ -27,19 +28,32 @@ export default function FailureNew() {
   const [inicio, setInicio] = useState(nowLocal());
   const [extra, setExtra] = useState<Record<string, string>>({});
   const [fotos, setFotos] = useState<string[]>([]);
+  const [camOpen, setCamOpen] = useState(false);
+  const [photoMsg, setPhotoMsg] = useState('');
+  const full = fotos.length >= MAX_PHOTOS;
   const [busy, setBusy] = useState(false); const [err, setErr] = useState('');
   const cam = useRef<HTMLInputElement>(null); const gal = useRef<HTMLInputElement>(null);
 
   const options = data.assets.filter((a) => (!onlyMine || mine.has(a.id)) && (!q || `${a.tag} ${a.tipo} ${a.marca}`.toLowerCase().includes(q.toLowerCase())));
   const addFiles = async (fl: FileList | null) => {
-    if (!fl) return;
-    const imgs = await Promise.all([...fl].map((f) => compressImage(f)));
-    setFotos((p) => [...p, ...imgs]);
+    if (!fl || !fl.length) return;
+    const room = MAX_PHOTOS - fotos.length;
+    const files = [...fl].slice(0, Math.max(0, room));
+    setPhotoMsg(fl.length > room ? `Máximo ${MAX_PHOTOS} fotos por falla: se agregaron ${files.length} de ${fl.length}.` : '');
+    if (!files.length) return;
+    const imgs = await Promise.all(files.map((f) => compressImage(f)));
+    setFotos((p) => [...p, ...imgs].slice(0, MAX_PHOTOS));
+  };
+  const onCamera = (img: string) => {
+    const next = [...fotos, img].slice(0, MAX_PHOTOS);
+    setFotos(next); setPhotoMsg('');
+    if (next.length >= MAX_PHOTOS) setCamOpen(false);
   };
 
   const submit = async () => {
     if (detenida === null) return setErr('Indica si la máquina queda detenida.');
     if (!assetId) return setErr('Selecciona el activo o componente.');
+    if (fotos.length > MAX_PHOTOS) return setErr(`Máximo ${MAX_PHOTOS} fotos por falla.`);
     if (!desc.trim()) return setErr('Describe el problema.');
     for (const f of failureExtraFields) if (f.required && !extra[f.key]) return setErr(`Falta: ${f.label}`);
     setBusy(true); setErr('');
@@ -99,12 +113,15 @@ export default function FailureNew() {
         ))}
         <div>
           <div className="row" style={{ marginBottom: 8 }}>
-            <button type="button" className="btn sec" onClick={() => cam.current?.click()}><Camera size={16} />Tomar foto</button>
-            <button type="button" className="btn sec" onClick={() => gal.current?.click()}><ImageIcon size={16} />Galería</button>
+            <button type="button" className="btn sec" disabled={full} onClick={() => { setPhotoMsg(''); setCamOpen(true); }}><Camera size={16} />Tomar foto</button>
+            <button type="button" className="btn sec" disabled={full} onClick={() => gal.current?.click()}><ImageIcon size={16} />Galería</button>
+            <span className="muted">{fotos.length} de {MAX_PHOTOS} fotos</span>
           </div>
           <input ref={cam} hidden type="file" accept="image/*" capture="environment" onChange={(e) => { void addFiles(e.target.files); e.target.value = ''; }} />
           <input ref={gal} hidden type="file" accept="image/*" multiple onChange={(e) => { void addFiles(e.target.files); e.target.value = ''; }} />
-          <div className="photos">{fotos.map((f, i) => <div key={i} style={{ position: 'relative' }}><img src={f} alt="" /><button className="btn danger sm" style={{ position: 'absolute', top: 2, right: 2, padding: 2, minHeight: 0 }} onClick={() => setFotos(fotos.filter((_, j) => j !== i))}><X size={12} /></button></div>)}</div>
+          {photoMsg && <div className="alert" style={{ marginBottom: 8 }}>{photoMsg}</div>}
+          {camOpen && <CameraCapture count={fotos.length} max={MAX_PHOTOS} onCapture={onCamera} onClose={() => setCamOpen(false)} onFallback={() => { setCamOpen(false); cam.current?.click(); }} />}
+          <div className="photos">{fotos.map((f, i) => <div key={i} style={{ position: 'relative' }}><img src={f} alt="" /><button type="button" aria-label="Quitar foto" className="btn danger sm" style={{ position: 'absolute', top: 2, right: 2, padding: 2, minHeight: 0 }} onClick={() => { setFotos(fotos.filter((_, j) => j !== i)); setPhotoMsg(''); }}><X size={12} /></button></div>)}</div>
         </div>
         {err && <div className="alert red">{err}</div>}
         {isDemo && <div className="muted">Modo demo: las fotos se guardan en este dispositivo.</div>}

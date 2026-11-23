@@ -16,6 +16,8 @@ export const assetLabel = (a?: Asset) => (a ? `${a.tag || 'S/TAG'} · ${a.tipo} 
 export const fmt = (iso?: string | null) => (iso ? new Date(iso).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : '—');
 export const hrs = (h: number | null) => (h == null ? '—' : `${h.toFixed(1)} h`);
 
+export const MAX_PHOTOS = 3;
+
 /** Reduce la foto en el cliente (máx. 1280px, JPEG) para subirla/guardarla liviana. */
 export function compressImage(file: File, max = 1280): Promise<string> {
   return new Promise((res, rej) => {
