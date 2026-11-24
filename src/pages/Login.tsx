@@ -21,7 +21,7 @@ export default function Login() {
       <div className="card" style={{ maxWidth: 420, width: '100%' }}>
         <h1>GMM</h1>
         <div style={{ height: 3, width: 56, background: 'var(--naranjo)', margin: '8px 0 12px' }} />
-        <p className="muted" style={{ marginTop: 0 }}>Glasstech Maintenance Manager</p>
+        <p className="muted" style={{ marginTop: 0 }}>Glasstech Maintenance Manager · versión {__BUILD__}</p>
         {isDemo ? (
           <div className="form">
             <div className="alert">Modo demo: datos locales en este dispositivo. Elige un perfil.</div>

@@ -45,6 +45,7 @@ export function App() {
         <div style={{ padding: 8, fontSize: 12 }}>
           <div>{me.nombre}</div><div style={{ opacity: .65 }}>{me.rol}{isDemo && ' · demo'}</div>
           <button className="btn ghost sm" style={{ color: '#fff', marginTop: 6 }} onClick={signOut}><LogOut size={14} />Salir</button>
+          <div style={{ opacity: .5, marginTop: 6 }}>Versión {__BUILD__}</div>
         </div>
       </aside>
       <main className="main">
@@ -69,6 +70,7 @@ export function App() {
       <nav className="tabbar" ref={bar} aria-label="Secciones">
         {items}
         <button type="button" onClick={signOut}><LogOut size={18} />Salir</button>
+        <span className="ver">Versión<br />{__BUILD__}</span>
       </nav>
     </div>
   );
