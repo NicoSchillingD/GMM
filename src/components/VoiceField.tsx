@@ -9,7 +9,7 @@ interface Props { label: string; value: string; onChange: (v: string) => void; m
 /** Campo de texto que se puede escribir o dictar por voz (español de Chile): lo dictado se agrega al texto. */
 export default function VoiceField({ label, value, onChange, multiline = true, required, hint }: Props) {
   const supported = SR() !== null;
-  const [on, setOn] = useState(false); const [interim, setInterim] = useState(''); const [msg, setMsg] = useState('');
+  const [on, setOn] = useState(false); const [msg, setMsg] = useState('');
   const rec = useRef<Rec | null>(null); const base = useRef(''); const valueRef = useRef(value);
   valueRef.current = value;
   useEffect(() => () => rec.current?.abort(), []);
@@ -40,19 +40,21 @@ export default function VoiceField({ label, value, onChange, multiline = true, r
     const problem = await ensureMic();
     if (problem) return setMsg(problem);
     const r = new R(); r.lang = 'es-CL'; r.continuous = true; r.interimResults = true;
+    const start0 = base.current;
+    // Cada evento trae la transcripción completa de la sesión: se recalcula todo (sin duplicar) y se guarda en el campo
+    // al instante, incluso la parte provisional, para que al detener no se pierda nada.
     r.onresult = (e) => {
-      let fin = ''; let tmp = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) { const t = e.results[i][0].transcript; if (e.results[i].isFinal) fin += t; else tmp += t; }
-      if (fin) { base.current = join(base.current, fin.trim()); onChange(base.current); }
-      setInterim(tmp);
+      let all = '';
+      for (let i = 0; i < e.results.length; i++) all += e.results[i][0].transcript;
+      all = all.trim();
+      if (all) { base.current = join(start0, all); onChange(base.current); }
     };
     r.onerror = (e) => setMsg(e.error === 'not-allowed' || e.error === 'service-not-allowed' ? 'No diste permiso para usar el micrófono. Actívalo en los ajustes del navegador para este sitio.' : e.error === 'no-speech' ? 'No se escuchó nada. Intenta de nuevo.' : e.error === 'network' ? 'El dictado necesita conexión a internet.' : 'No se pudo dictar. Escribe el texto.');
-    r.onend = () => { setOn(false); setInterim(''); };
+    r.onend = () => { setOn(false); };
     rec.current = r; setOn(true);
     try { r.start(); } catch { setOn(false); }
   };
   const stop = () => rec.current?.stop();
-  const shown = interim ? join(value, interim) : value;
 
   return (
     <div className="f">
@@ -61,8 +63,8 @@ export default function VoiceField({ label, value, onChange, multiline = true, r
         {supported && <button type="button" className={`btn sm ${on ? 'danger' : 'sec'}`} onClick={on ? stop : () => void start()} aria-pressed={on}>{on ? <><Square size={14} />Detener</> : <><Mic size={14} />Dictar</>}</button>}
       </span>
       {multiline
-        ? <textarea value={shown} readOnly={on} onChange={(e) => onChange(e.target.value)} aria-label={label} />
-        : <input value={shown} readOnly={on} onChange={(e) => onChange(e.target.value)} aria-label={label} />}
+        ? <textarea value={value} readOnly={on} onChange={(e) => onChange(e.target.value)} aria-label={label} />
+        : <input value={value} readOnly={on} onChange={(e) => onChange(e.target.value)} aria-label={label} />}
       {on && <span className="muted">● Escuchando… habla con normalidad y toca "Detener" al terminar.</span>}
       {msg && <span className="alert">{msg}</span>}
       {!supported && <span className="muted">Este navegador no dicta por voz en la app; usa el micrófono del teclado de tu teléfono.</span>}
