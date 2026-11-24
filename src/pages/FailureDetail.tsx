@@ -60,7 +60,7 @@ export default function FailureDetail() {
         <div className="row"><span className="muted">Reportada {fmt(f.creado)} por {who(f.reportado_por)}</span></div>
         {f.detiene_produccion && <div className="alert red">Detención desde {fmt(f.inicio_detencion)} · liberación {fmt(f.liberacion)} · {hrs(downtimeHours(f))}</div>}
         <div><b>Problema:</b> {f.descripcion}</div>
-        {f.causa_inmediata && <div><b>Causa inmediata:</b> {f.causa_inmediata}</div>}
+        {f.causa_inmediata && <div><b>Diagnóstico inicial operacional:</b> {f.causa_inmediata}</div>}
         {failureExtraFields.filter((x) => f.extra[x.key]).map((x) => <div key={x.key}><b>{x.label}:</b> {f.extra[x.key]}</div>)}
         {!!f.videos?.length && <div className="photos">{f.videos.map((u, i) => <video key={i} src={u} controls preload="metadata" playsInline aria-label={`Video ${i + 1}`} />)}</div>}
         <div className="photos">{f.fotos.map((u, i) => <a key={i} href={u} target="_blank" rel="noreferrer"><img src={u} alt={`Foto ${i + 1}`} /></a>)}</div>

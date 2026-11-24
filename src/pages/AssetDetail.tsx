@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { useApp } from '../lib/app';
 import { update } from '../lib/db';
+import { QrLabel } from './Labels';
 import { AssetBadge, FailBadge, SevBadge, fmt, hrs } from '../lib/ui';
 import { mtbf, mttr } from '../lib/kpi';
 import type { AssetStatus } from '../lib/types';
@@ -40,6 +41,10 @@ export default function AssetDetail() {
           </div>
         </div>
       </div>
+      {can('mantenimiento') && <div className="card" style={{ marginTop: 16 }}><h2>Etiqueta QR</h2>
+        <div className="row" style={{ alignItems: 'flex-start', marginTop: 8 }}><QrLabel a={a} area={data.areas.find((x) => x.id === a.area_id)?.nombre} />
+          <div className="muted" style={{ maxWidth: 320 }}>Imprímela y pégala en el equipo. Al escanearla en "Reportar", el equipo queda elegido. <Link to={`/etiquetas${a.area_id ? `?area=${a.area_id}` : ''}`}>Imprimir todas las etiquetas del área →</Link></div></div>
+      </div>}
       <div className="card" style={{ marginTop: 16 }}><h2>Componentes ({children.length})</h2>
         {children.map((c) => <div key={c.id} className="node"><Link to={`/activos/${c.id}`}>{c.tag || 'S/TAG'}</Link> {c.tipo} <AssetBadge s={c.estado} /></div>)}
         {!children.length && <p className="muted">Sin componentes anidados. Crea uno desde Activos y anídalo bajo este equipo.</p>}

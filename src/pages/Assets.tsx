@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, QrCode } from 'lucide-react';
 import { useApp } from '../lib/app';
 import { insert, uid, update } from '../lib/db';
 import { AssetBadge, Badge } from '../lib/ui';
@@ -51,6 +51,7 @@ export default function Assets() {
       <div className="top"><h1>Activos</h1>
         <div className="row">
           <button className="btn sec" onClick={() => setView(view === 'arbol' ? 'tabla' : 'arbol')}>{view === 'arbol' ? 'Ver tabla' : 'Ver árbol'}</button>
+          {can('mantenimiento') && <Link className="btn sec" to="/etiquetas"><QrCode size={16} />Etiquetas QR</Link>}
           {can('mantenimiento') && <button className="btn accent" onClick={() => setEdit(blank())}><Plus size={16} />Nuevo activo / componente</button>}
         </div>
       </div>

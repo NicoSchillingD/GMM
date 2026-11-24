@@ -15,6 +15,7 @@ import Costs from './pages/Costs';
 import Reports from './pages/Reports';
 import UsersPage from './pages/Users';
 import Kanban from './pages/Kanban';
+import Labels from './pages/Labels';
 
 const links = [
   ['/', 'Dashboard', LayoutDashboard], ['/fallas', 'Fallas', AlertTriangle], ['/tablero', 'Tablero', Columns3], ['/activos', 'Activos', Boxes],
@@ -54,6 +55,7 @@ export function App() {
           <Route path="/planes" element={<Plans />} />
           <Route path="/costos" element={<Costs />} />
           <Route path="/reportes" element={<Reports />} />
+          <Route path="/etiquetas" element={can('mantenimiento') ? <Labels /> : <Navigate to="/" />} />
           <Route path="/usuarios" element={<UsersPage />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
