@@ -66,3 +66,12 @@ tr.click{cursor:pointer}tr.click:hover{background:var(--gray-050)}
 .cam-shutter{width:68px;height:68px;border-radius:50%;border:4px solid #fff;background:var(--naranjo);color:#fff;display:grid;place-items:center;cursor:pointer}
 .cam-shutter:disabled{opacity:.4;cursor:default}
 .cam-err{flex:1;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;padding:24px;text-align:center}
+.kanban{display:grid;grid-template-columns:repeat(5,minmax(230px,1fr));gap:var(--space-3);overflow-x:auto;align-items:start;padding-bottom:var(--space-3)}
+.kcol{background:var(--gray-100);border-radius:var(--radius-lg);padding:var(--space-2);display:flex;flex-direction:column;gap:var(--space-2);min-height:120px}
+.kcol.drop{outline:2px dashed var(--celeste)}
+.kcol header{display:flex;justify-content:space-between;align-items:center;padding:4px 6px}
+.kcard{background:#fff;border:1px solid var(--border-1);border-radius:var(--radius-md);padding:var(--space-3);box-shadow:var(--shadow-sm)}
+.kcard[draggable=true]{cursor:grab}
+.modal{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px}
+.modal .card{width:100%;max-width:480px;max-height:90dvh;overflow:auto}
+.main{min-width:0}

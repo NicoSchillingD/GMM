@@ -7,7 +7,7 @@ import { insert, uid, isDemo, supabase } from '../lib/db';
 import { MAX_PHOTOS, assetLabel, compressImage } from '../lib/ui';
 import { failureExtraFields } from '../config/failureFields';
 import { notifyLocal, askNotifyPermission } from '../lib/notify';
-import type { Failure } from '../lib/types';
+import type { Failure, FailureKind } from '../lib/types';
 
 const nowLocal = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
@@ -23,6 +23,7 @@ export default function FailureNew() {
   const [q, setQ] = useState('');
   const [assetId, setAssetId] = useState(sp.get('activo') ?? '');
   // Obligatorio: sin valor por defecto. Sí = Urgente (máquina detenida), No = Informativo.
+  const [tipo, setTipo] = useState<FailureKind>('falla');
   const [detenida, setDetenida] = useState<boolean | null>(null);
   const [desc, setDesc] = useState(''); const [causa, setCausa] = useState('');
   const [inicio, setInicio] = useState(nowLocal());
@@ -51,14 +52,14 @@ export default function FailureNew() {
   };
 
   const submit = async () => {
-    if (detenida === null) return setErr('Indica si la máquina queda detenida.');
+    if (tipo === 'falla' && detenida === null) return setErr('Indica si la máquina queda detenida.');
     if (!assetId) return setErr('Selecciona el activo o componente.');
     if (fotos.length > MAX_PHOTOS) return setErr(`Máximo ${MAX_PHOTOS} fotos por falla.`);
     if (!desc.trim()) return setErr('Describe el problema.');
     for (const f of failureExtraFields) if (f.required && !extra[f.key]) return setErr(`Falta: ${f.label}`);
     setBusy(true); setErr('');
     try {
-      const urgent = detenida === true;
+      const urgent = tipo === 'falla' && detenida === true;
       const id = uid();
       let urls = fotos;
       if (supabase) {
@@ -71,7 +72,7 @@ export default function FailureNew() {
         }));
       }
       const row: Failure = {
-        id, numero: Math.max(0, ...data.failures.map((x) => x.numero)) + 1, asset_id: assetId, reportado_por: me!.id, severidad: urgent ? 'urgente' : 'informativo', detiene_produccion: urgent,
+        id, numero: Math.max(0, ...data.failures.map((x) => x.numero)) + 1, tipo, asset_id: assetId, reportado_por: me!.id, severidad: urgent ? 'urgente' : 'informativo', detiene_produccion: urgent,
         inicio_detencion: urgent ? new Date(inicio).toISOString() : null, liberacion: null,
         descripcion: desc.trim(), causa_inmediata: causa.trim(), extra, estado: 'abierto', fotos: urls, creado: new Date().toISOString(),
         fecha_inicio_solucion: null, nota_status: '', nota_solucion: '', encargado_id: null,
@@ -85,15 +86,19 @@ export default function FailureNew() {
 
   return (
     <div style={{ maxWidth: 680 }}>
-      <div className="top"><div><Link to="/fallas">← Fallas</Link><h1>Reportar falla</h1></div></div>
+      <div className="top"><div><Link to="/fallas">← Fallas</Link><h1>{tipo === 'falla' ? 'Reportar falla' : 'Reportar hallazgo'}</h1></div></div>
       <div className="card form">
-        <div role="group" aria-labelledby="detenida-q">
+        <div role="group" aria-label="Tipo de reporte" className="sev">
+          <button type="button" aria-pressed={tipo === 'falla'} className={`u ${tipo === 'falla' ? 'on' : ''}`} onClick={() => setTipo('falla')}><b>Falla</b><span className="muted">El equipo dejó de funcionar o funciona mal</span></button>
+          <button type="button" aria-pressed={tipo === 'hallazgo'} className={`i ${tipo === 'hallazgo' ? 'on' : ''}`} onClick={() => setTipo('hallazgo')}><b>Hallazgo</b><span className="muted">Algo detectado que conviene corregir a tiempo</span></button>
+        </div>
+        {tipo === 'falla' && <div role="group" aria-labelledby="detenida-q">
           <div id="detenida-q" style={{ fontWeight: 600, color: 'var(--fg-1)', marginBottom: 8 }}>¿La máquina queda detenida? *</div>
           <div className="sev">
             <button type="button" aria-pressed={detenida === true} className={`u ${detenida === true ? 'on' : ''}`} onClick={() => setDetenida(true)}><b>Sí, queda detenida</b><span className="muted">Urgente · pérdida de tiempo productivo</span></button>
             <button type="button" aria-pressed={detenida === false} className={`i ${detenida === false ? 'on' : ''}`} onClick={() => setDetenida(false)}><b>No, sigue operando</b><span className="muted">Informativo · sin pérdida de tiempo productivo</span></button>
           </div>
-        </div>
+        </div>}
         <label className="f">Activo / componente
           <input placeholder="Buscar por TAG, tipo o marca…" value={q} onChange={(e) => setQ(e.target.value)} />
           <select size={5} value={assetId} onChange={(e) => setAssetId(e.target.value)} style={{ height: 150 }}>
@@ -103,7 +108,7 @@ export default function FailureNew() {
           </select>
         </label>
         {me!.rol === 'supervisor' && <label className="row"><input type="checkbox" style={{ width: 'auto' }} checked={onlyMine} onChange={(e) => setOnlyMine(e.target.checked)} />Solo mis activos asignados ({mine.size})</label>}
-        {detenida === true && <label className="f">Inicio de la detención<input type="datetime-local" value={inicio} onChange={(e) => setInicio(e.target.value)} /></label>}
+        {tipo === 'falla' && detenida === true && <label className="f">Inicio de la detención<input type="datetime-local" value={inicio} onChange={(e) => setInicio(e.target.value)} /></label>}
         <label className="f">Problema / detalle<textarea value={desc} onChange={(e) => setDesc(e.target.value)} /></label>
         <label className="f">Causa inmediata (opcional)<input value={causa} onChange={(e) => setCausa(e.target.value)} /></label>
         {failureExtraFields.map((f) => (
@@ -127,7 +132,7 @@ export default function FailureNew() {
         </div>
         {err && <div className="alert red">{err}</div>}
         {isDemo && <div className="muted">Modo demo: las fotos se guardan en este dispositivo.</div>}
-        <button className={`btn ${detenida ? 'danger' : ''}`} disabled={busy} onClick={submit}>{busy ? 'Enviando…' : 'Enviar reporte'}</button>
+        <button className={`btn ${tipo === 'falla' && detenida ? 'danger' : ''}`} disabled={busy} onClick={submit}>{busy ? 'Enviando…' : tipo === 'falla' ? 'Enviar reporte' : 'Enviar hallazgo'}</button>
       </div>
     </div>
   );

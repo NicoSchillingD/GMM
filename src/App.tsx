@@ -1,5 +1,5 @@
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
-import { AlertTriangle, BarChart3, Boxes, CalendarClock, LayoutDashboard, LogOut, Users, Wallet, ClipboardList } from 'lucide-react';
+import { AlertTriangle, BarChart3, Boxes, CalendarClock, LayoutDashboard, LogOut, Users, Wallet, ClipboardList, Columns3 } from 'lucide-react';
 import { useApp } from './lib/app';
 import { isDemo } from './lib/db';
 import Login from './pages/Login';
@@ -14,9 +14,10 @@ import WorkOrders from './pages/WorkOrders';
 import Costs from './pages/Costs';
 import Reports from './pages/Reports';
 import UsersPage from './pages/Users';
+import Kanban from './pages/Kanban';
 
 const links = [
-  ['/', 'Dashboard', LayoutDashboard], ['/fallas', 'Fallas', AlertTriangle], ['/activos', 'Activos', Boxes],
+  ['/', 'Dashboard', LayoutDashboard], ['/fallas', 'Fallas', AlertTriangle], ['/tablero', 'Tablero', Columns3], ['/activos', 'Activos', Boxes],
   ['/ordenes', 'Órdenes', ClipboardList], ['/planes', 'Preventivo', CalendarClock], ['/costos', 'Costos', Wallet],
   ['/reportes', 'Reportes', BarChart3], ['/usuarios', 'Usuarios', Users],
 ] as const;
@@ -45,6 +46,7 @@ export function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/activos" element={<Assets />} />
           <Route path="/activos/:id" element={<AssetDetail />} />
+          <Route path="/tablero" element={<Kanban />} />
           <Route path="/fallas" element={<Failures />} />
           <Route path="/fallas/nueva" element={<FailureNew />} />
           <Route path="/fallas/:id" element={<FailureDetail />} />

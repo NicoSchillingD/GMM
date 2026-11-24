@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useApp } from '../lib/app';
 import { insert, uid, update } from '../lib/db';
-import { FAIL_STATUS, FailBadge, SevBadge, assetLabel, fmt, hrs } from '../lib/ui';
+import { FAIL_STATUS, FailBadge, KindBadge, SevBadge, assetLabel, fmt, hrs } from '../lib/ui';
 import { downtimeHours } from '../lib/kpi';
 import { failureExtraFields } from '../config/failureFields';
+import { allowedTransitions, changeStatus, isAreaOwner } from '../lib/workflow';
 import type { FailureStatus } from '../lib/types';
 
 export default function FailureDetail() {
@@ -20,16 +21,16 @@ export default function FailureDetail() {
   const who = (pid: string) => data.profiles.find((p) => p.id === pid)?.nombre ?? '—';
   const isMant = can('mantenimiento');
 
+  const next = allowedTransitions(f, me, data.assets, data.assignments);
+  const owner = isAreaOwner(me, f.asset_id, data.assets, data.assignments);
+  const [err, setErr] = useState('');
   const send = async () => {
     if (!txt.trim() && !st) return;
-    await insert('feedback', { id: uid(), failure_id: f.id, autor: me!.id, comentario: txt.trim(), estado: st || null, creado: new Date().toISOString() });
-    if (st) {
-      const patch: Partial<typeof f> = { estado: st };
-      if (st === 'en_curso' && !f.fecha_inicio_solucion) patch.fecha_inicio_solucion = new Date().toISOString();
-      if ((st === 'resuelto' || st === 'cerrado') && f.detiene_produccion && !f.liberacion) patch.liberacion = new Date().toISOString();
-      await update('failures', f.id, patch);
-      if (st === 'resuelto' || st === 'cerrado') await update('assets', f.asset_id, { estado: 'operativo' });
-    }
+    setErr('');
+    try {
+      if (st) await changeStatus(f, st, me!.id, txt, f.encargado_id);
+      else await insert('feedback', { id: uid(), failure_id: f.id, autor: me!.id, comentario: txt.trim(), estado: null, creado: new Date().toISOString() });
+    } catch (e) { return setErr(e instanceof Error ? e.message : 'No se pudo guardar.'); }
     setTxt(''); setSt(''); await reload();
   };
   const addCost = async () => {
@@ -40,7 +41,7 @@ export default function FailureDetail() {
 
   return (
     <div style={{ maxWidth: 820 }}>
-      <div className="top"><div><Link to="/fallas">← Fallas</Link><h1>#{f.numero} · {assetLabel(asset)}</h1></div><div className="row"><SevBadge s={f.severidad} /><FailBadge s={f.estado} /></div></div>
+      <div className="top"><div><Link to="/fallas">← Fallas</Link><h1>#{f.numero} · {assetLabel(asset)}</h1></div><div className="row"><KindBadge k={f.tipo} /><SevBadge s={f.severidad} /><FailBadge s={f.estado} /></div></div>
       <div className="card form">
         <div className="row"><span className="muted">Reportada {fmt(f.creado)} por {who(f.reportado_por)}</span></div>
         {f.detiene_produccion && <div className="alert red">Detención desde {fmt(f.inicio_detencion)} · liberación {fmt(f.liberacion)} · {hrs(downtimeHours(f))}</div>}
@@ -64,16 +65,17 @@ export default function FailureDetail() {
         <label className="f">Nota solución<textarea disabled={!isMant} defaultValue={f.nota_solucion} onBlur={async (e) => { if (e.target.value !== f.nota_solucion) { await update('failures', f.id, { nota_solucion: e.target.value }); await reload(); } }} /></label>
       </div>
 
-      <div className="card" style={{ marginTop: 16 }}><h2>Feedback de Mantenimiento</h2>
+      <div className="card" style={{ marginTop: 16 }}><h2>Historial y comentarios</h2>
         <div className="form" style={{ marginTop: 12 }}>
           {fb.map((x) => <div key={x.id} className="card" style={{ background: 'var(--surface-alt)' }}><div className="row"><b>{who(x.autor)}</b><span className="muted">{fmt(x.creado)}</span>{x.estado && <FailBadge s={x.estado} />}</div><div>{x.comentario}</div></div>)}
-          {!fb.length && <div className="muted">Aún sin respuesta del equipo de Mantenimiento.</div>}
-          {(isMant || f.reportado_por === me!.id) && <>
-            <textarea placeholder={isMant ? 'Diagnóstico, acción tomada, repuestos…' : 'Agregar información…'} value={txt} onChange={(e) => setTxt(e.target.value)} />
+          {!fb.length && <div className="muted">Aún sin comentarios.</div>}
+          {(isMant || owner || f.reportado_por === me!.id) && <>
+            <textarea placeholder={isMant ? 'Diagnóstico, acción tomada, repuestos…' : owner ? 'Comentario de validación…' : 'Agregar información…'} value={txt} onChange={(e) => setTxt(e.target.value)} />
             <div className="row">
-              {isMant && <select style={{ maxWidth: 220 }} value={st} onChange={(e) => setSt(e.target.value as FailureStatus | '')}><option value="">Sin cambiar estado</option>{(Object.keys(FAIL_STATUS) as FailureStatus[]).map((s) => <option key={s} value={s}>{FAIL_STATUS[s][0]}</option>)}</select>}
+              {next.length > 0 && <select style={{ maxWidth: 240 }} value={st} onChange={(e) => setSt(e.target.value as FailureStatus | '')}><option value="">Sin cambiar estado</option>{next.map((s) => <option key={s} value={s}>Pasar a {FAIL_STATUS[s][0]}</option>)}</select>}
               <button className="btn" onClick={send}>Enviar</button>
             </div>
+            {err && <div className="alert red">{err}</div>}
           </>}
         </div>
       </div>

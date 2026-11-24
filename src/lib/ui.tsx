@@ -1,16 +1,18 @@
-import type { Asset, FailureStatus, AssetStatus } from './types';
+import type { Asset, FailureKind, FailureStatus, AssetStatus } from './types';
 
 export const ASSET_STATUS: Record<AssetStatus, [string, string]> = {
   operativo: ['Operativo', 'ok'], fuera_servicio: ['Fuera de servicio', 'bad'],
   en_mantencion: ['En mantención', 'warn'], standby: ['Standby', 'info'], desincorporado: ['Desincorporado', ''],
 };
 export const FAIL_STATUS: Record<FailureStatus, [string, string]> = {
-  abierto: ['Abierto', 'bad'], en_revision: ['En revisión', 'warn'], en_curso: ['En curso', 'info'],
+  abierto: ['Abierto', 'bad'], en_revision: ['En revisión', 'warn'], gestion_compra: ['Gestión de compra', 'info'],
   resuelto: ['Resuelto', 'ok'], cerrado: ['Cerrado', ''],
 };
 export const Badge = ({ t, c = '' }: { t: string; c?: string }) => <span className={`badge ${c}`}>{t}</span>;
 export const AssetBadge = ({ s }: { s: AssetStatus }) => <Badge t={ASSET_STATUS[s][0]} c={ASSET_STATUS[s][1]} />;
 export const FailBadge = ({ s }: { s: FailureStatus }) => <Badge t={FAIL_STATUS[s][0]} c={FAIL_STATUS[s][1]} />;
+export const KIND: Record<FailureKind, string> = { falla: 'Falla', hallazgo: 'Hallazgo' };
+export const KindBadge = ({ k }: { k?: FailureKind }) => <Badge t={KIND[k ?? 'falla']} c={k === 'hallazgo' ? 'warn' : ''} />;
 export const SevBadge = ({ s }: { s: 'urgente' | 'informativo' }) => <Badge t={s === 'urgente' ? 'Urgente' : 'Informativo'} c={s === 'urgente' ? 'bad' : 'info'} />;
 export const assetLabel = (a?: Asset) => (a ? `${a.tag || 'S/TAG'} · ${a.tipo} ${a.marca}`.trim() : '—');
 export const fmt = (iso?: string | null) => (iso ? new Date(iso).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : '—');
