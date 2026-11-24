@@ -4,6 +4,11 @@ import { Mic, Square } from 'lucide-react';
 interface Rec { lang: string; continuous: boolean; interimResults: boolean; start(): void; stop(): void; abort(): void; onresult: ((e: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }) => void) | null; onerror: ((e: { error: string }) => void) | null; onend: (() => void) | null; onstart: (() => void) | null; onaudiostart: (() => void) | null; onsoundstart: (() => void) | null; onspeechstart: (() => void) | null }
 const SR = (): (new () => Rec) | null => { const w = window as unknown as { SpeechRecognition?: new () => Rec; webkitSpeechRecognition?: new () => Rec }; return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null; };
 
+const IOS = typeof navigator !== 'undefined' && (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+/** Solo un dictado a la vez (iOS/Safari no tolera dos reconocedores): al iniciar otro se cancela el anterior. */
+let active: { abort(): void } | null = null;
+const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
 interface Props { label: string; value: string; onChange: (v: string) => void; multiline?: boolean; required?: boolean; hint?: string }
 
 /** Campo de texto que se puede escribir o dictar por voz (español de Chile): lo dictado se agrega al texto. */
@@ -24,7 +29,7 @@ export default function VoiceField({ label, value, onChange, multiline = true, r
     const policy = pp.permissionsPolicy ?? pp.featurePolicy;
     if (policy && !policy.allowsFeature('microphone'))
       return 'Esta versión de la App tiene el micrófono bloqueado. Es una versión antigua guardada en el dispositivo: cierra la App o la pestaña, ábrela de nuevo (o recarga con Ctrl+Shift+R) para actualizarla.';
-    if (!navigator.mediaDevices?.getUserMedia) return null; // sin API: se intenta igual con el dictado del navegador
+    if (IOS || !navigator.mediaDevices?.getUserMedia) return null; // iOS: el propio dictado pide el permiso; pedirlo antes por otra vía lo interfiere
     try { (await navigator.mediaDevices.getUserMedia({ audio: true })).getTracks().forEach((t) => t.stop()); return null; }
     catch (e) {
       const name = (e as DOMException).name;
@@ -40,6 +45,7 @@ export default function VoiceField({ label, value, onChange, multiline = true, r
   const start = async () => {
     const R = SR(); if (!R) return;
     setMsg(''); base.current = valueRef.current;
+    if (active) { active.abort(); active = null; await wait(350); }
     const problem = await ensureMic();
     if (problem) return setMsg(problem);
     const r = new R(); r.lang = 'es-CL'; r.continuous = true; r.interimResults = true;
@@ -55,10 +61,11 @@ export default function VoiceField({ label, value, onChange, multiline = true, r
       all = all.trim();
       if (all) { base.current = join(start0, all); onChange(base.current); }
     };
-    r.onerror = (e) => { mark({ error: e.error }); setMsg(e.error === 'not-allowed' || e.error === 'service-not-allowed' ? 'No diste permiso para usar el micrófono. Actívalo en los ajustes del navegador para este sitio.' : e.error === 'no-speech' ? 'No se escuchó nada. Intenta de nuevo.' : e.error === 'network' ? 'El dictado necesita conexión a internet y que tu navegador pueda usar su servicio de voz (algunos, como Brave, lo bloquean).' : e.error === 'audio-capture' ? 'El navegador no pudo tomar el audio del micrófono. Revisa que sea el micrófono correcto en los ajustes del sistema.' : `No se pudo dictar (${e.error}). Escribe el texto.`); };
-    r.onend = () => { setOn(false); if (dg.current.results === 0 && !dg.current.error) setMsg(`Tu navegador cerró el dictado sin entregar texto (${dg.current.audio ? 'recibió audio' : 'sin audio'}, ${dg.current.sound ? 'detectó sonido' : 'sin sonido'}, ${dg.current.speech ? 'detectó voz' : 'sin voz'}). Prueba con Google Chrome o Edge actualizado, o escribe el texto.`); };
+    r.onerror = (e) => { mark({ error: e.error }); setMsg(e.error === 'aborted' ? '' : e.error === 'not-allowed' || e.error === 'service-not-allowed' ? (IOS ? 'iPhone no permite el dictado. Revisa en Ajustes: General → Teclado → Activar dictado, y Privacidad y seguridad → Micrófono y Reconocimiento de voz (permitir para Safari / esta App).' : 'No diste permiso para usar el micrófono. Actívalo en los ajustes del navegador para este sitio.') : e.error === 'no-speech' ? 'No se escuchó nada. Intenta de nuevo.' : e.error === 'network' ? 'El dictado necesita conexión a internet y que tu navegador pueda usar su servicio de voz (algunos, como Brave, lo bloquean).' : e.error === 'audio-capture' ? 'El navegador no pudo tomar el audio del micrófono. Revisa que sea el micrófono correcto en los ajustes del sistema.' : `No se pudo dictar (${e.error}). Escribe el texto.`); };
+    r.onend = () => { if (active === r) active = null; setOn(false); if (dg.current.results === 0 && !dg.current.error) setMsg(`Tu navegador cerró el dictado sin entregar texto (${dg.current.audio ? 'recibió audio' : 'sin audio'}, ${dg.current.sound ? 'detectó sonido' : 'sin sonido'}, ${dg.current.speech ? 'detectó voz' : 'sin voz'}). ${IOS ? 'En iPhone revisa Ajustes → General → Teclado → Activar dictado, o usa el micrófono del teclado.' : 'Prueba con Google Chrome o Edge actualizado, o escribe el texto.'}`); };
     rec.current = r; setOn(true);
-    await new Promise((res) => setTimeout(res, 250)); // deja que el sistema libere el micrófono tomado para pedir el permiso
+    if (!IOS) await wait(250); // deja que el sistema libere el micrófono tomado para pedir el permiso
+    active = r;
     try { r.start(); } catch (err) { setOn(false); setMsg(`No se pudo iniciar el dictado (${err instanceof Error ? err.message : 'error'}).`); }
   };
   const stop = () => rec.current?.stop();
