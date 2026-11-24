@@ -23,6 +23,9 @@ export default function VideoCapture({ count, max, onCapture, onClose, onFallbac
   const timer = useRef<number>(0);
   const [ready, setReady] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [finishing, setFinishing] = useState(false);
+  const done = useRef(false);
+  const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const [secs, setSecs] = useState(0);
   const [error, setError] = useState('');
 
@@ -51,22 +54,34 @@ export default function VideoCapture({ count, max, onCapture, onClose, onFallbac
     return () => { cancelled = true; window.clearInterval(timer.current); if (rec.current?.state === 'recording') { rec.current.onstop = null; rec.current.stop(); } stream.current?.getTracks().forEach((t) => t.stop()); };
   }, []);
 
-  const stop = () => { if (rec.current?.state === 'recording') rec.current.stop(); };
+  /** Cierra la grabación una sola vez con lo grabado hasta ahora (la usan el evento de fin, el respaldo y el corte a los 10 s). */
+  const finish = (mime: string) => {
+    if (done.current) return; done.current = true;
+    window.clearInterval(timer.current); setRecording(false);
+    const seconds = Math.min(MAX_VIDEO_SECONDS, (Date.now() - started.current) / 1000);
+    const blob = new Blob(chunks.current, { type: mime });
+    if (blob.size) onCapture(blob, seconds);
+    onClose();
+  };
+  const stop = () => {
+    const r = rec.current; if (!r || done.current || finishing) return;
+    setFinishing(true); window.clearInterval(timer.current);
+    try { if (r.state === 'recording') { r.requestData?.(); r.stop(); } } catch { /* ya detenido */ }
+    // Safari a veces no emite el evento "stop": si no llega, se cierra igual con lo grabado.
+    window.setTimeout(() => finish(r.mimeType || pickMime() || 'video/mp4'), 1500);
+  };
   const start = () => {
     if (!stream.current || recording) return;
-    chunks.current = [];
+    chunks.current = []; done.current = false;
     const mimeType = pickMime();
-    const r = new MediaRecorder(stream.current, { ...(mimeType ? { mimeType } : {}), videoBitsPerSecond: 1_500_000 });
+    let r: MediaRecorder;
+    try { r = new MediaRecorder(stream.current, { ...(mimeType ? { mimeType } : {}), videoBitsPerSecond: 1_500_000 }); }
+    catch { r = new MediaRecorder(stream.current); }
     r.ondataavailable = (e) => { if (e.data.size) chunks.current.push(e.data); };
-    r.onstop = () => {
-      window.clearInterval(timer.current); setRecording(false);
-      const seconds = Math.min(MAX_VIDEO_SECONDS, (Date.now() - started.current) / 1000);
-      const blob = new Blob(chunks.current, { type: r.mimeType || mimeType || 'video/webm' });
-      if (blob.size) onCapture(blob, seconds);
-      onClose();
-    };
+    r.onstop = () => finish(r.mimeType || mimeType || 'video/webm');
+    r.onerror = () => { setError('La grabación falló en este navegador. Usa "Video de galería" para grabar con la cámara del sistema.'); };
     rec.current = r; started.current = Date.now(); setSecs(0);
-    r.start(500);
+    if (IOS) r.start(); else r.start(500); // en Safari, sin cortes de tiempo: entrega todo al detener
     setRecording(true);
     timer.current = window.setInterval(() => {
       const t = (Date.now() - started.current) / 1000;
@@ -88,11 +103,11 @@ export default function VideoCapture({ count, max, onCapture, onClose, onFallbac
         <>
           <video ref={video} className="cam-video" playsInline muted autoPlay />
           <div className="cam-bottom">
-            <span className="cam-timer" aria-live="polite">{recording ? `● ${secs.toFixed(1)} / ${MAX_VIDEO_SECONDS} s` : `0 / ${MAX_VIDEO_SECONDS} s`}</span>
+            <span className="cam-timer" aria-live="polite">{finishing ? 'Guardando…' : recording ? `● ${secs.toFixed(1)} / ${MAX_VIDEO_SECONDS} s` : `0 / ${MAX_VIDEO_SECONDS} s`}</span>
             {recording
-              ? <button type="button" className="cam-shutter rec" onClick={stop} aria-label="Detener grabación"><Square size={24} /></button>
+              ? <button type="button" className="cam-shutter rec" disabled={finishing} onClick={stop} aria-label="Detener grabación"><Square size={24} /></button>
               : <button type="button" className="cam-shutter" disabled={!ready || count >= max} onClick={start} aria-label="Empezar a grabar"><Circle size={26} /></button>}
-            <button type="button" className="btn sec" disabled={recording} onClick={onClose}>Cancelar</button>
+            <button type="button" className="btn sec" disabled={recording || finishing} onClick={onClose}>Cancelar</button>
           </div>
         </>
       )}
