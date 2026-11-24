@@ -86,3 +86,10 @@ tr.click{cursor:pointer}tr.click:hover{background:var(--gray-050)}
 .qrlabel img,.qrph{width:150px;height:150px}.qrlabel b{font-size:15px;color:#000}
 .stepbar{display:flex;gap:6px}.stepbar i{flex:1;height:6px;border-radius:3px;background:var(--gray-100)}.stepbar i.on{background:var(--celeste)}
 @media print{.side,.tabbar,.noprint{display:none!important}.shell{display:block}.main{padding:0;max-width:none}body{background:#fff}.qrgrid{grid-template-columns:repeat(3,1fr)}.qrlabel{border-color:#999}}
+
+.only-mobile{display:none}
+@media(max-width:820px){
+  .only-mobile{display:inline-flex}
+  .users.has-sel .u-hide-sel{display:none}
+  .users .row select,.users .row input{max-width:100%!important;flex:1 1 140px}
+}

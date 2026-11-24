@@ -12,7 +12,7 @@ export default function UsersPage() {
   const [ed, setEd] = useState<{ nombre: string; email: string; rol: Role } | null>(null);
   const [busy, setBusy] = useState(false);
   const [pw, setPw] = useState('');
-  const pick = (p: Profile) => { setSel(p.id); setPw(''); setEd({ nombre: p.nombre, email: p.email, rol: p.rol }); setMsg(''); };
+  const pick = (p: Profile) => { setSel(p.id); setPw(''); setAsgMsg(''); if (window.matchMedia('(max-width: 820px)').matches) window.scrollTo({ top: 0 }); setEd({ nombre: p.nombre, email: p.email, rol: p.rol }); setMsg(''); };
   const admins = data.profiles.filter((p) => p.rol === 'admin');
 
   /** Edita o elimina un perfil. En Supabase pasa por la función de servidor (que también cambia/elimina el acceso). */
@@ -74,10 +74,17 @@ export default function UsersPage() {
   };
   const mine = data.assignments.filter((a) => a.profile_id === sel);
   const label = (a: typeof mine[number]) => a.asset_id ? data.assets.find((x) => x.id === a.asset_id)?.tag || 'S/TAG' : `Área ${data.areas.find((x) => x.id === a.area_id)?.nombre}`;
+  const [asgMsg, setAsgMsg] = useState('');
   const assign = async () => {
-    if (!sel || !asg.target) return;
-    await insert('assignments', { id: uid(), profile_id: sel, asset_id: asg.kind === 'activo' ? asg.target : null, area_id: asg.kind === 'area' ? asg.target : null });
-    await reload();
+    if (!sel) return;
+    if (!asg.target) return setAsgMsg(asg.kind === 'area' ? 'Elige un área de la lista.' : 'Elige un activo de la lista.');
+    const dup = mine.some((a) => (asg.kind === 'area' ? a.area_id : a.asset_id) === asg.target);
+    if (dup) return setAsgMsg('Esa asignación ya existe.');
+    try {
+      await insert('assignments', { id: uid(), profile_id: sel, asset_id: asg.kind === 'activo' ? asg.target : null, area_id: asg.kind === 'area' ? asg.target : null });
+      setAsg({ ...asg, target: '' }); setAsgMsg('Asignación agregada.');
+      await reload();
+    } catch (e) { setAsgMsg(e instanceof Error ? `No se pudo asignar: ${e.message}` : 'No se pudo asignar.'); }
   };
   const create = async () => {
     if (!nu.nombre || !nu.email) return setMsg('Completa nombre y correo.');
@@ -93,9 +100,10 @@ export default function UsersPage() {
   return (
     <>
       <div className="top"><h1>Usuarios y asignaciones</h1></div>
-      <div className="grid g2">
+      <div className={`grid g2 users ${sel ? 'has-sel' : ''}`}>
         <div className="card"><h2>Perfiles</h2>
-          <table><tbody>{data.profiles.map((p) => (
+          {sel && <button type="button" className="btn ghost sm only-mobile" style={{ marginTop: 8 }} onClick={() => { setSel(null); setEd(null); }}>← Volver a la lista de usuarios</button>}
+          <table className="stack u-hide-sel"><tbody>{data.profiles.map((p) => (
             <tr key={p.id} className="click" onClick={() => pick(p)} style={{ background: sel === p.id ? 'var(--sky-100)' : undefined }}>
               <td><b>{p.nombre}</b><div className="muted">{p.email}</div></td>
               <td><select value={p.rol} onClick={(e) => e.stopPropagation()} onChange={async (e) => { const rol = e.target.value as Role; if (await manage('update', p, { nombre: p.nombre, email: p.email, rol }) && sel === p.id) setEd((x) => x && { ...x, rol }); }}><option value="admin">Admin</option><option value="mantenimiento">Mantenimiento</option><option value="supervisor">Supervisor</option><option value="consulta">Consulta</option></select></td>
@@ -118,8 +126,8 @@ export default function UsersPage() {
               <button className="btn ghost" onClick={() => { setSel(null); setEd(null); }}>Cerrar</button>
             </div>
           </div>}
-          <h3 style={{ marginTop: 16 }}>Nuevo perfil</h3>
-          <div className="row" style={{ marginTop: 8 }}>
+          <h3 className="u-hide-sel" style={{ marginTop: 16 }}>Nuevo perfil</h3>
+          <div className="row u-hide-sel" style={{ marginTop: 8 }}>
             <input style={{ maxWidth: 160 }} placeholder="Nombre" value={nu.nombre} onChange={(e) => setNu({ ...nu, nombre: e.target.value })} />
             <input style={{ maxWidth: 200 }} placeholder="correo@glasstech.cl" value={nu.email} onChange={(e) => setNu({ ...nu, email: e.target.value })} />
             <select style={{ maxWidth: 140 }} value={nu.rol} onChange={(e) => setNu({ ...nu, rol: e.target.value as Role })}><option value="admin">Admin</option><option value="mantenimiento">Mantenimiento</option><option value="supervisor">Supervisor</option><option value="consulta">Consulta</option></select>
@@ -136,6 +144,7 @@ export default function UsersPage() {
                 {asg.kind === 'area' ? data.areas.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>) : data.assets.map((a) => <option key={a.id} value={a.id}>{a.tag || 'S/TAG'} · {a.tipo}</option>)}</select>
               <button className="btn" onClick={assign}>Asignar</button>
             </div>
+            {asgMsg && <div className="alert" role="status">{asgMsg}</div>}
             <table><tbody>{mine.map((a) => <tr key={a.id}><td>{label(a)}</td><td><button className="btn ghost sm" onClick={async () => { await remove('assignments', a.id); await reload(); }}>Quitar</button></td></tr>)}</tbody></table>
           </>}
         </div>
