@@ -19,6 +19,19 @@ export const fmt = (iso?: string | null) => (iso ? new Date(iso).toLocaleString(
 export const hrs = (h: number | null) => (h == null ? '—' : `${h.toFixed(1)} h`);
 
 export const MAX_PHOTOS = 3;
+export const MAX_VIDEOS = 2;
+export const MAX_VIDEO_BYTES = 25 * 1024 * 1024;
+
+/** Duración (s) de un archivo de video, o null si el navegador no puede leerla. */
+export function videoDuration(blob: Blob): Promise<number | null> {
+  return new Promise((res) => {
+    const v = document.createElement('video'); const url = URL.createObjectURL(blob);
+    const done = (d: number | null) => { URL.revokeObjectURL(url); res(d); };
+    v.preload = 'metadata'; v.onloadedmetadata = () => done(Number.isFinite(v.duration) ? v.duration : null); v.onerror = () => done(null); v.src = url;
+  });
+}
+export const blobToDataUrl = (b: Blob) => new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(r.error); r.readAsDataURL(b); });
+export const videoExt = (type: string) => (type.includes('mp4') ? 'mp4' : type.includes('quicktime') ? 'mov' : 'webm');
 
 /** Reduce la foto en el cliente (máx. 1280px, JPEG) para subirla/guardarla liviana. */
 export function compressImage(file: File, max = 1280): Promise<string> {

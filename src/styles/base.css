@@ -76,3 +76,6 @@ tr.click{cursor:pointer}tr.click:hover{background:var(--gray-050)}
 .modal .card{width:100%;max-width:480px;max-height:90dvh;overflow:auto}
 .main{min-width:0}
 @keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin 1s linear infinite}
+.cam-timer{min-width:92px;font-variant-numeric:tabular-nums;font-weight:600}
+.cam-shutter.rec{background:var(--danger)}
+.photos video{width:160px;height:92px;object-fit:cover;border-radius:var(--radius-md);border:1px solid var(--border-1);background:#000}

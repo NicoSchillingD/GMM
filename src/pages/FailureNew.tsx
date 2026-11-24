@@ -1,10 +1,11 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Camera, Image as ImageIcon, X } from 'lucide-react';
+import { Camera, Image as ImageIcon, Video, X } from 'lucide-react';
 import CameraCapture from '../components/CameraCapture';
+import VideoCapture, { MAX_VIDEO_SECONDS } from '../components/VideoCapture';
 import { useApp } from '../lib/app';
 import { insert, uid, isDemo, supabase } from '../lib/db';
-import { MAX_PHOTOS, assetLabel, compressImage } from '../lib/ui';
+import { MAX_PHOTOS, MAX_VIDEOS, MAX_VIDEO_BYTES, assetLabel, blobToDataUrl, compressImage, videoDuration, videoExt } from '../lib/ui';
 import { failureExtraFields } from '../config/failureFields';
 import { notifyLocal, askNotifyPermission } from '../lib/notify';
 import type { Failure, FailureKind } from '../lib/types';
@@ -30,6 +31,10 @@ export default function FailureNew() {
   const [extra, setExtra] = useState<Record<string, string>>({});
   const [fotos, setFotos] = useState<string[]>([]);
   const [camOpen, setCamOpen] = useState(false);
+  const [videos, setVideos] = useState<{ blob: Blob; url: string }[]>([]);
+  const [vidOpen, setVidOpen] = useState(false);
+  const vidIn = useRef<HTMLInputElement>(null);
+  const fullVid = videos.length >= MAX_VIDEOS;
   const [photoMsg, setPhotoMsg] = useState('');
   const full = fotos.length >= MAX_PHOTOS;
   const [busy, setBusy] = useState(false); const [err, setErr] = useState('');
@@ -51,6 +56,15 @@ export default function FailureNew() {
     if (next.length >= MAX_PHOTOS) setCamOpen(false);
   };
 
+  const addVideo = async (blob: Blob, known?: number) => {
+    if (videos.length >= MAX_VIDEOS) return setPhotoMsg(`Máximo ${MAX_VIDEOS} videos por reporte.`);
+    if (blob.size > MAX_VIDEO_BYTES) return setPhotoMsg('El video pesa más de 25 MB. Graba uno más corto.');
+    const d = known ?? await videoDuration(blob);
+    if (d == null) return setPhotoMsg('No se pudo leer el video. Graba uno nuevo con "Grabar video".');
+    if (d > MAX_VIDEO_SECONDS + 0.5) return setPhotoMsg(`El video dura ${Math.round(d)} s; el máximo es ${MAX_VIDEO_SECONDS} s.`);
+    setPhotoMsg('');
+    setVideos((v) => [...v, { blob, url: URL.createObjectURL(blob) }]);
+  };
   const submit = async () => {
     if (tipo === 'falla' && detenida === null) return setErr('Indica si la máquina queda detenida.');
     if (!assetId) return setErr('Selecciona el activo o componente.');
@@ -71,10 +85,19 @@ export default function FailureNew() {
           return supabase!.storage.from('failure-photos').getPublicUrl(path).data.publicUrl;
         }));
       }
+      let vurls: string[] = [];
+      if (supabase) {
+        vurls = await Promise.all(videos.map(async (v, i) => {
+          const path = `${id}/video-${i}.${videoExt(v.blob.type)}`;
+          const { error } = await supabase!.storage.from('failure-photos').upload(path, v.blob, { contentType: v.blob.type || 'video/webm' });
+          if (error) throw error;
+          return supabase!.storage.from('failure-photos').getPublicUrl(path).data.publicUrl;
+        }));
+      } else vurls = await Promise.all(videos.map((v) => blobToDataUrl(v.blob)));
       const row: Failure = {
         id, numero: Math.max(0, ...data.failures.map((x) => x.numero)) + 1, tipo, asset_id: assetId, reportado_por: me!.id, severidad: urgent ? 'urgente' : 'informativo', detiene_produccion: urgent,
         inicio_detencion: urgent ? new Date(inicio).toISOString() : null, liberacion: null,
-        descripcion: desc.trim(), causa_inmediata: causa.trim(), extra, estado: 'abierto', fotos: urls, creado: new Date().toISOString(),
+        descripcion: desc.trim(), causa_inmediata: causa.trim(), extra, estado: 'abierto', fotos: urls, videos: vurls, creado: new Date().toISOString(),
         fecha_inicio_solucion: null, nota_status: '', nota_solucion: '', encargado_id: null,
       };
       await insert('failures', row);
@@ -124,10 +147,18 @@ export default function FailureNew() {
             <button type="button" className="btn sec" disabled={full} onClick={() => gal.current?.click()}><ImageIcon size={16} />Galería</button>
             <span className="muted">{fotos.length} de {MAX_PHOTOS} fotos</span>
           </div>
+          <div className="row" style={{ marginBottom: 8 }}>
+            <button type="button" className="btn sec" disabled={fullVid} onClick={() => { setPhotoMsg(''); setVidOpen(true); }}><Video size={16} />Grabar video</button>
+            <button type="button" className="btn ghost" disabled={fullVid} onClick={() => vidIn.current?.click()}>Video de galería</button>
+            <span className="muted">{videos.length} de {MAX_VIDEOS} videos · máx. {MAX_VIDEO_SECONDS} s</span>
+          </div>
+          <input ref={vidIn} hidden type="file" accept="video/*" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void addVideo(f); }} />
           <input ref={cam} hidden type="file" accept="image/*" capture="environment" onChange={(e) => { void addFiles(e.target.files); e.target.value = ''; }} />
           <input ref={gal} hidden type="file" accept="image/*" multiple onChange={(e) => { void addFiles(e.target.files); e.target.value = ''; }} />
           {photoMsg && <div className="alert" style={{ marginBottom: 8 }}>{photoMsg}</div>}
           {camOpen && <CameraCapture count={fotos.length} max={MAX_PHOTOS} onCapture={onCamera} onClose={() => setCamOpen(false)} onFallback={() => { setCamOpen(false); cam.current?.click(); }} />}
+          {vidOpen && <VideoCapture count={videos.length} max={MAX_VIDEOS} onCapture={(b, sec) => void addVideo(b, sec)} onClose={() => setVidOpen(false)} onFallback={() => { setVidOpen(false); vidIn.current?.click(); }} />}
+          {!!videos.length && <div className="photos" style={{ marginBottom: 8 }}>{videos.map((v, i) => <div key={v.url} style={{ position: 'relative' }}><video src={v.url} controls playsInline preload="metadata" /><button type="button" aria-label="Quitar video" className="btn danger sm" style={{ position: 'absolute', top: 2, right: 2, padding: 2, minHeight: 0 }} onClick={() => { URL.revokeObjectURL(v.url); setVideos(videos.filter((_, j) => j !== i)); setPhotoMsg(''); }}><X size={12} /></button></div>)}</div>}
           <div className="photos">{fotos.map((f, i) => <div key={i} style={{ position: 'relative' }}><img src={f} alt="" /><button type="button" aria-label="Quitar foto" className="btn danger sm" style={{ position: 'absolute', top: 2, right: 2, padding: 2, minHeight: 0 }} onClick={() => { setFotos(fotos.filter((_, j) => j !== i)); setPhotoMsg(''); }}><X size={12} /></button></div>)}</div>
         </div>
         {err && <div className="alert red">{err}</div>}

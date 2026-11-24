@@ -18,7 +18,7 @@ export interface Failure {
   id: string; numero: number; tipo: FailureKind; asset_id: string; reportado_por: string; severidad: Severity;
   detiene_produccion: boolean; inicio_detencion: string | null; liberacion: string | null;
   descripcion: string; causa_inmediata: string; extra: Record<string, string>;
-  estado: FailureStatus; fotos: string[]; creado: string;
+  estado: FailureStatus; fotos: string[]; videos?: string[]; creado: string;
   fecha_inicio_solucion: string | null; nota_status: string; nota_solucion: string; encargado_id: string | null;
 }
 export interface Feedback { id: string; failure_id: string; autor: string; comentario: string; estado: FailureStatus | null; creado: string }

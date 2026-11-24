@@ -62,6 +62,7 @@ export default function FailureDetail() {
         <div><b>Problema:</b> {f.descripcion}</div>
         {f.causa_inmediata && <div><b>Causa inmediata:</b> {f.causa_inmediata}</div>}
         {failureExtraFields.filter((x) => f.extra[x.key]).map((x) => <div key={x.key}><b>{x.label}:</b> {f.extra[x.key]}</div>)}
+        {!!f.videos?.length && <div className="photos">{f.videos.map((u, i) => <video key={i} src={u} controls preload="metadata" playsInline aria-label={`Video ${i + 1}`} />)}</div>}
         <div className="photos">{f.fotos.map((u, i) => <a key={i} href={u} target="_blank" rel="noreferrer"><img src={u} alt={`Foto ${i + 1}`} /></a>)}</div>
         {asset && <Link to={`/activos/${asset.id}`}>Ver ficha del activo →</Link>}
       </div>
