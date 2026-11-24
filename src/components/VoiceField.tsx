@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Mic, Square } from 'lucide-react';
 
-interface Rec { lang: string; continuous: boolean; interimResults: boolean; start(): void; stop(): void; abort(): void; onresult: ((e: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }) => void) | null; onerror: ((e: { error: string }) => void) | null; onend: (() => void) | null }
+interface Rec { lang: string; continuous: boolean; interimResults: boolean; start(): void; stop(): void; abort(): void; onresult: ((e: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }) => void) | null; onerror: ((e: { error: string }) => void) | null; onend: (() => void) | null; onstart: (() => void) | null; onaudiostart: (() => void) | null; onsoundstart: (() => void) | null; onspeechstart: (() => void) | null }
 const SR = (): (new () => Rec) | null => { const w = window as unknown as { SpeechRecognition?: new () => Rec; webkitSpeechRecognition?: new () => Rec }; return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null; };
 
 interface Props { label: string; value: string; onChange: (v: string) => void; multiline?: boolean; required?: boolean; hint?: string }
@@ -10,6 +10,9 @@ interface Props { label: string; value: string; onChange: (v: string) => void; m
 export default function VoiceField({ label, value, onChange, multiline = true, required, hint }: Props) {
   const supported = SR() !== null;
   const [on, setOn] = useState(false); const [msg, setMsg] = useState('');
+  const [diag, setDiag] = useState<{ audio: boolean; sound: boolean; speech: boolean; results: number; error: string } | null>(null);
+  const dg = useRef({ audio: false, sound: false, speech: false, results: 0, error: '' });
+  const mark = (patch: Partial<typeof dg.current>) => { dg.current = { ...dg.current, ...patch }; setDiag(dg.current); };
   const rec = useRef<Rec | null>(null); const base = useRef(''); const valueRef = useRef(value);
   valueRef.current = value;
   useEffect(() => () => rec.current?.abort(), []);
@@ -41,18 +44,22 @@ export default function VoiceField({ label, value, onChange, multiline = true, r
     if (problem) return setMsg(problem);
     const r = new R(); r.lang = 'es-CL'; r.continuous = true; r.interimResults = true;
     const start0 = base.current;
+    dg.current = { audio: false, sound: false, speech: false, results: 0, error: '' }; setDiag(dg.current);
+    r.onaudiostart = () => mark({ audio: true }); r.onsoundstart = () => mark({ sound: true }); r.onspeechstart = () => mark({ speech: true });
     // Cada evento trae la transcripción completa de la sesión: se recalcula todo (sin duplicar) y se guarda en el campo
     // al instante, incluso la parte provisional, para que al detener no se pierda nada.
     r.onresult = (e) => {
+      mark({ results: dg.current.results + 1 });
       let all = '';
       for (let i = 0; i < e.results.length; i++) all += e.results[i][0].transcript;
       all = all.trim();
       if (all) { base.current = join(start0, all); onChange(base.current); }
     };
-    r.onerror = (e) => setMsg(e.error === 'not-allowed' || e.error === 'service-not-allowed' ? 'No diste permiso para usar el micrófono. Actívalo en los ajustes del navegador para este sitio.' : e.error === 'no-speech' ? 'No se escuchó nada. Intenta de nuevo.' : e.error === 'network' ? 'El dictado necesita conexión a internet.' : 'No se pudo dictar. Escribe el texto.');
-    r.onend = () => { setOn(false); };
+    r.onerror = (e) => { mark({ error: e.error }); setMsg(e.error === 'not-allowed' || e.error === 'service-not-allowed' ? 'No diste permiso para usar el micrófono. Actívalo en los ajustes del navegador para este sitio.' : e.error === 'no-speech' ? 'No se escuchó nada. Intenta de nuevo.' : e.error === 'network' ? 'El dictado necesita conexión a internet y que tu navegador pueda usar su servicio de voz (algunos, como Brave, lo bloquean).' : e.error === 'audio-capture' ? 'El navegador no pudo tomar el audio del micrófono. Revisa que sea el micrófono correcto en los ajustes del sistema.' : `No se pudo dictar (${e.error}). Escribe el texto.`); };
+    r.onend = () => { setOn(false); if (dg.current.results === 0 && !dg.current.error) setMsg(`Tu navegador cerró el dictado sin entregar texto (${dg.current.audio ? 'recibió audio' : 'sin audio'}, ${dg.current.sound ? 'detectó sonido' : 'sin sonido'}, ${dg.current.speech ? 'detectó voz' : 'sin voz'}). Prueba con Google Chrome o Edge actualizado, o escribe el texto.`); };
     rec.current = r; setOn(true);
-    try { r.start(); } catch { setOn(false); }
+    await new Promise((res) => setTimeout(res, 250)); // deja que el sistema libere el micrófono tomado para pedir el permiso
+    try { r.start(); } catch (err) { setOn(false); setMsg(`No se pudo iniciar el dictado (${err instanceof Error ? err.message : 'error'}).`); }
   };
   const stop = () => rec.current?.stop();
 
@@ -66,6 +73,7 @@ export default function VoiceField({ label, value, onChange, multiline = true, r
         ? <textarea value={value} readOnly={on} onChange={(e) => onChange(e.target.value)} aria-label={label} />
         : <input value={value} readOnly={on} onChange={(e) => onChange(e.target.value)} aria-label={label} />}
       {on && <span className="muted">● Escuchando… habla con normalidad y toca "Detener" al terminar.</span>}
+      {diag && (on || diag.results === 0) && <span className="muted" style={{ fontSize: 12 }}>Diagnóstico: audio {diag.audio ? '✓' : '✗'} · sonido {diag.sound ? '✓' : '✗'} · voz {diag.speech ? '✓' : '✗'} · textos recibidos {diag.results}{diag.error ? ` · error: ${diag.error}` : ''}</span>}
       {msg && <span className="alert">{msg}</span>}
       {!supported && <span className="muted">Este navegador no dicta por voz en la app; usa el micrófono del teclado de tu teléfono.</span>}
       {hint && !on && <span className="muted">{hint}</span>}
