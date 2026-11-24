@@ -1,5 +1,6 @@
 import type { Asset, Assignment, Failure, FailureStatus, Profile } from './types';
 import { insert, uid, update } from './db';
+import { notifyEvent } from './push';
 
 /** Columnas del flujo, en orden. */
 export const STATUS_FLOW: FailureStatus[] = ['abierto', 'en_revision', 'gestion_compra', 'resuelto', 'cerrado'];
@@ -52,7 +53,10 @@ export async function changeStatus(f: Failure, to: FailureStatus, authorId: stri
     if (!f.fecha_inicio_solucion) patch.fecha_inicio_solucion = now;
   }
   if (to === 'resuelto' && f.detiene_produccion && !f.liberacion) patch.liberacion = now;
-  await insert('feedback', { id: uid(), failure_id: f.id, autor: authorId, comentario: comment.trim(), estado: to, creado: now });
+  const fid = uid();
+  await insert('feedback', { id: fid, failure_id: f.id, autor: authorId, comentario: comment.trim(), estado: to, creado: now });
   await update('failures', f.id, patch);
   if (to === 'resuelto' && (f.tipo ?? 'falla') === 'falla') await update('assets', f.asset_id, { estado: 'operativo' });
+  notifyEvent({ event: 'status_changed', feedback_id: fid });
+  if (patch.encargado_id && patch.encargado_id !== f.encargado_id) notifyEvent({ event: 'case_assigned', failure_id: f.id }); // se asignó al pasar a En revisión
 }

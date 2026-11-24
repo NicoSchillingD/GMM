@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../lib/app';
 import { insert, isDemo, remove, supabase, uid, update } from '../lib/db';
+import { notifyEvent } from '../lib/push';
 import type { Profile, Role } from '../lib/types';
 
 export default function UsersPage() {
@@ -81,7 +82,9 @@ export default function UsersPage() {
     const dup = mine.some((a) => (asg.kind === 'area' ? a.area_id : a.asset_id) === asg.target);
     if (dup) return setAsgMsg('Esa asignación ya existe.');
     try {
-      await insert('assignments', { id: uid(), profile_id: sel, asset_id: asg.kind === 'activo' ? asg.target : null, area_id: asg.kind === 'area' ? asg.target : null });
+      const aid = uid();
+      await insert('assignments', { id: aid, profile_id: sel, asset_id: asg.kind === 'activo' ? asg.target : null, area_id: asg.kind === 'area' ? asg.target : null });
+      notifyEvent({ event: 'area_assigned', assignment_id: aid });
       setAsg({ ...asg, target: '' }); setAsgMsg('Asignación agregada.');
       await reload();
     } catch (e) { setAsgMsg(e instanceof Error ? `No se pudo asignar: ${e.message}` : 'No se pudo asignar.'); }

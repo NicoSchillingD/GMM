@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { isDemo, list, supabase, uid } from './db';
+import { detachPush } from './push';
 import type { Profile, Tables, TableName } from './types';
 
 type Data = { [K in TableName]: Tables[K][] };
@@ -71,6 +72,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return error ? 'No se pudo enviar el correo.' : null;
   };
   const signOut = async () => {
+    if (!isDemo) await detachPush(); // este dispositivo deja de recibir los avisos de esta cuenta
     if (isDemo) localStorage.removeItem('gmm-demo-user'); else await supabase!.auth.signOut();
     setMe(null);
   };

@@ -10,7 +10,7 @@ import { useApp } from '../lib/app';
 import { insert, uid, isDemo, supabase } from '../lib/db';
 import { MAX_PHOTOS, MAX_VIDEOS, MAX_VIDEO_BYTES, assetLabel, blobToDataUrl, compressImage, videoDuration, videoExt } from '../lib/ui';
 import { failureExtraFields } from '../config/failureFields';
-import { notifyLocal, askNotifyPermission } from '../lib/notify';
+import { notifyEvent } from '../lib/push';
 import type { Failure, FailureKind } from '../lib/types';
 
 const nowLocal = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
@@ -120,7 +120,7 @@ export default function FailureNew() {
         fecha_inicio_solucion: null, nota_status: '', nota_solucion: '', encargado_id: null,
       };
       await insert('failures', row);
-      if (urgent) { await askNotifyPermission(); notifyLocal('Falla URGENTE', assetLabel(data.assets.find((a) => a.id === assetId))); }
+      notifyEvent({ event: 'failure_created', failure_id: id });
       await reload();
       nav(`/fallas/${id}`);
     } catch (e) { setErr(e instanceof Error ? e.message : 'No se pudo guardar'); } finally { setBusy(false); }

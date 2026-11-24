@@ -4,6 +4,7 @@ import { Camera, FileText, Loader2 } from 'lucide-react';
 import { useApp } from '../lib/app';
 import { insert, isDemo, uid, update } from '../lib/db';
 import { scanInvoice } from '../lib/scanInvoice';
+import { notifyEvent } from '../lib/push';
 import { FAIL_STATUS, FailBadge, KindBadge, SevBadge, assetLabel, fmt, hrs } from '../lib/ui';
 import { downtimeHours } from '../lib/kpi';
 import { failureExtraFields } from '../config/failureFields';
@@ -72,7 +73,7 @@ export default function FailureDetail() {
           <div><div className="muted">Área</div>{data.areas.find((a) => a.id === asset?.area_id)?.nombre ?? '—'}</div>
           <div><div className="muted">Fecha inicio solución</div>{fmt(f.fecha_inicio_solucion)}</div>
           <label className="f">Encargado asignado
-            <select disabled={!isMant} value={f.encargado_id ?? ''} onChange={async (e) => { await update('failures', f.id, { encargado_id: e.target.value || null }); await reload(); }}>
+            <select disabled={!isMant} value={f.encargado_id ?? ''} onChange={async (e) => { await update('failures', f.id, { encargado_id: e.target.value || null }); if (e.target.value) notifyEvent({ event: 'case_assigned', failure_id: f.id }); await reload(); }}>
               <option value="">Sin asignar</option>{data.profiles.filter((p) => p.rol === 'mantenimiento' || p.rol === 'admin').map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
             </select></label>
         </div>
