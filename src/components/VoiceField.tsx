@@ -15,9 +15,30 @@ export default function VoiceField({ label, value, onChange, multiline = true, r
   useEffect(() => () => rec.current?.abort(), []);
 
   const join = (a: string, b: string) => (a && b ? `${a.replace(/\s+$/, '')} ${b}` : a || b);
-  const start = () => {
+  /** Pide el permiso del micrófono de forma explícita (abre el aviso del navegador) y explica por qué falla si no se obtiene. */
+  const ensureMic = async (): Promise<string | null> => {
+    const pp = (document as unknown as { permissionsPolicy?: { allowsFeature(f: string): boolean }; featurePolicy?: { allowsFeature(f: string): boolean } });
+    const policy = pp.permissionsPolicy ?? pp.featurePolicy;
+    if (policy && !policy.allowsFeature('microphone'))
+      return 'Esta versión de la App tiene el micrófono bloqueado. Es una versión antigua guardada en el dispositivo: cierra la App o la pestaña, ábrela de nuevo (o recarga con Ctrl+Shift+R) para actualizarla.';
+    if (!navigator.mediaDevices?.getUserMedia) return null; // sin API: se intenta igual con el dictado del navegador
+    try { (await navigator.mediaDevices.getUserMedia({ audio: true })).getTracks().forEach((t) => t.stop()); return null; }
+    catch (e) {
+      const name = (e as DOMException).name;
+      if (name === 'NotFoundError') return 'No se encontró un micrófono en este dispositivo.';
+      if (name === 'NotReadableError') return 'El micrófono está en uso por otra aplicación. Ciérrala e intenta de nuevo.';
+      let state = '';
+      try { state = (await navigator.permissions.query({ name: 'microphone' as PermissionName })).state; } catch { /* no soportado */ }
+      return state === 'denied'
+        ? 'El micrófono está bloqueado para este sitio. Toca el candado junto a la dirección → Micrófono → Permitir, y recarga la página.'
+        : 'No se concedió el permiso del micrófono. Toca "Dictar" de nuevo y elige "Permitir" en el aviso del navegador.';
+    }
+  };
+  const start = async () => {
     const R = SR(); if (!R) return;
     setMsg(''); base.current = valueRef.current;
+    const problem = await ensureMic();
+    if (problem) return setMsg(problem);
     const r = new R(); r.lang = 'es-CL'; r.continuous = true; r.interimResults = true;
     r.onresult = (e) => {
       let fin = ''; let tmp = '';
@@ -37,7 +58,7 @@ export default function VoiceField({ label, value, onChange, multiline = true, r
     <div className="f">
       <span className="row" style={{ justifyContent: 'space-between' }}>
         <span>{label}{required && ' *'}</span>
-        {supported && <button type="button" className={`btn sm ${on ? 'danger' : 'sec'}`} onClick={on ? stop : start} aria-pressed={on}>{on ? <><Square size={14} />Detener</> : <><Mic size={14} />Dictar</>}</button>}
+        {supported && <button type="button" className={`btn sm ${on ? 'danger' : 'sec'}`} onClick={on ? stop : () => void start()} aria-pressed={on}>{on ? <><Square size={14} />Detener</> : <><Mic size={14} />Dictar</>}</button>}
       </span>
       {multiline
         ? <textarea value={shown} readOnly={on} onChange={(e) => onChange(e.target.value)} aria-label={label} />
