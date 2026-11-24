@@ -75,3 +75,4 @@ tr.click{cursor:pointer}tr.click:hover{background:var(--gray-050)}
 .modal{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px}
 .modal .card{width:100%;max-width:480px;max-height:90dvh;overflow:auto}
 .main{min-width:0}
+@keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin 1s linear infinite}
