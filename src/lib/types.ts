@@ -21,7 +21,7 @@ export interface Failure {
   estado: FailureStatus; fotos: string[]; videos?: string[]; creado: string;
   fecha_inicio_solucion: string | null; nota_status: string; nota_solucion: string; encargado_id: string | null;
 }
-export interface Feedback { id: string; failure_id: string; autor: string; comentario: string; estado: FailureStatus | null; creado: string }
+export interface Feedback { id: string; failure_id: string; autor: string; comentario: string; estado: FailureStatus | null; fotos?: string[]; creado: string }
 export interface Plan {
   id: string; asset_id: string; nombre: string; tareas: string[]; frecuencia_dias: number;
   proxima_fecha: string; responsable: string | null;

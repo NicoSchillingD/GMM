@@ -9,6 +9,8 @@ import { fmtDate, FAIL_STATUS, FailBadge, KindBadge, SevBadge, assetLabel, fmt, 
 import { downtimeHours } from '../lib/kpi';
 import { failureExtraFields } from '../config/failureFields';
 import FailureEdit from '../components/FailureEdit';
+import PhotoAttach from '../components/PhotoAttach';
+import { uploadCommentPhotos } from '../lib/photos';
 import { deleteFailure, deletionImpact } from '../lib/failureAdmin';
 import { allowedTransitions, changeStatus, isAreaOwner } from '../lib/workflow';
 import type { FailureStatus } from '../lib/types';
@@ -23,6 +25,7 @@ export default function FailureDetail() {
   const [costErr, setCostErr] = useState('');
   const [scanBusy, setScanBusy] = useState(false); const [scanMsg, setScanMsg] = useState('');
   const [err, setErr] = useState('');
+  const [shots, setShots] = useState<string[]>([]); const [sending, setSending] = useState(false);
   const [sol, setSol] = useState<string | null>(null); // null = sin editar: se usa la solución ya guardada
   const nav = useNavigate();
   const [editing, setEditing] = useState(false); const [delBusy, setDelBusy] = useState(false); const [delErr, setDelErr] = useState('');
@@ -46,13 +49,13 @@ export default function FailureDetail() {
   const next = allowedTransitions(f, me, data.assets, data.assignments);
   const owner = isAreaOwner(me, f.asset_id, data.assets, data.assignments);
   const send = async () => {
-    if (!txt.trim() && !st) return;
-    setErr('');
+    if (!txt.trim() && !st && !shots.length) return;
+    setErr(''); setSending(true);
     try {
-      if (st) await changeStatus(f, st, me!.id, txt, f.encargado_id, st === 'resuelto' ? (sol ?? f.nota_solucion) : undefined);
-      else await insert('feedback', { id: uid(), failure_id: f.id, autor: me!.id, comentario: txt.trim(), estado: null, creado: new Date().toISOString() });
-    } catch (e) { return setErr(e instanceof Error ? e.message : 'No se pudo guardar.'); }
-    setTxt(''); setSt(''); setSol(null); await reload();
+      if (st) await changeStatus(f, st, me!.id, txt, f.encargado_id, st === 'resuelto' ? (sol ?? f.nota_solucion) : undefined, shots);
+      else { const cid = uid(); await insert('feedback', { id: cid, failure_id: f.id, autor: me!.id, comentario: txt.trim(), estado: null, fotos: await uploadCommentPhotos(f.id, cid, shots), creado: new Date().toISOString() }); }
+    } catch (e) { setSending(false); return setErr(e instanceof Error ? e.message : 'No se pudo guardar.'); }
+    setTxt(''); setSt(''); setSol(null); setShots([]); setSending(false); await reload();
   };
   const addCost = async () => {
     setCostErr('');
@@ -108,13 +111,14 @@ export default function FailureDetail() {
 
       <div className="card" style={{ marginTop: 16 }}><h2>Historial y comentarios</h2>
         <div className="form" style={{ marginTop: 12 }}>
-          {fb.map((x) => <div key={x.id} className="card" style={{ background: 'var(--surface-alt)' }}><div className="row"><b>{who(x.autor)}</b><span className="muted">{fmt(x.creado)}</span>{x.estado && <FailBadge s={x.estado} />}</div><div>{x.comentario}</div></div>)}
+          {fb.map((x) => <div key={x.id} className="card" style={{ background: 'var(--surface-alt)' }}><div className="row"><b>{who(x.autor)}</b><span className="muted">{fmt(x.creado)}</span>{x.estado && <FailBadge s={x.estado} />}</div><div style={{ whiteSpace: 'pre-wrap' }}>{x.comentario}</div>{!!x.fotos?.length && <div className="photos" style={{ marginTop: 8 }}>{x.fotos.map((u, i) => <a key={i} href={u} target="_blank" rel="noreferrer"><img src={u} alt={`Foto ${i + 1} del comentario`} /></a>)}</div>}</div>)}
           {!fb.length && <div className="muted">Aún sin comentarios.</div>}
           {(isMant || owner || f.reportado_por === me!.id) && <>
             <textarea placeholder={isMant ? 'Diagnóstico, acción tomada, repuestos…' : owner ? 'Comentario de validación…' : 'Agregar información…'} value={txt} onChange={(e) => setTxt(e.target.value)} />
+            <PhotoAttach value={shots} onChange={setShots} />
             <div className="row">
               {next.length > 0 && <select style={{ maxWidth: 240 }} value={st} onChange={(e) => setSt(e.target.value as FailureStatus | '')}><option value="">Sin cambiar estado</option>{next.map((s) => <option key={s} value={s}>Pasar a {FAIL_STATUS[s][0]}</option>)}</select>}
-              <button className="btn" onClick={send}>Enviar</button>
+              <button className="btn" disabled={sending} onClick={send}>{sending ? 'Enviando…' : 'Enviar'}</button>
             </div>
             {st === 'resuelto' && <label className="f">Solución aplicada *<textarea value={sol ?? f.nota_solucion} onChange={(e) => setSol(e.target.value)} placeholder="Qué se hizo para resolver el problema" /></label>}
             {err && <div className="alert red">{err}</div>}

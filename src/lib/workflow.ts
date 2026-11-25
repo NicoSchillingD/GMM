@@ -1,6 +1,7 @@
 import type { Asset, Assignment, Failure, FailureStatus, Profile } from './types';
 import { insert, uid, update } from './db';
 import { notifyEvent } from './push';
+import { uploadCommentPhotos } from './photos';
 
 /** Columnas del flujo, en orden. */
 export const STATUS_FLOW: FailureStatus[] = ['abierto', 'en_revision', 'gestion_compra', 'resuelto', 'cerrado'];
@@ -43,7 +44,7 @@ export function allowedTransitions(f: Pick<Failure, 'estado' | 'asset_id'>, u: P
 }
 
 /** Cambia el estado: guarda el comentario (opcional) en el historial y aplica los efectos del paso. */
-export async function changeStatus(f: Failure, to: FailureStatus, authorId: string, comment: string, encargadoId?: string | null, solution?: string): Promise<void> {
+export async function changeStatus(f: Failure, to: FailureStatus, authorId: string, comment: string, encargadoId?: string | null, solution?: string, fotos: string[] = []): Promise<void> {
   const now = new Date().toISOString();
   const patch: Partial<Failure> = { estado: to };
   if (to === 'en_revision') {
@@ -61,7 +62,8 @@ export async function changeStatus(f: Failure, to: FailureStatus, authorId: stri
     note = [note, `Solución aplicada: ${sol}`].filter(Boolean).join('\n');
   }
   const fid = uid();
-  await insert('feedback', { id: fid, failure_id: f.id, autor: authorId, comentario: note, estado: to, creado: now });
+  const urls = await uploadCommentPhotos(f.id, fid, fotos);
+  await insert('feedback', { id: fid, failure_id: f.id, autor: authorId, comentario: note, estado: to, fotos: urls, creado: now });
   await update('failures', f.id, patch);
   if (to === 'resuelto' && (f.tipo ?? 'falla') === 'falla') await update('assets', f.asset_id, { estado: 'operativo' });
   notifyEvent({ event: 'status_changed', feedback_id: fid });

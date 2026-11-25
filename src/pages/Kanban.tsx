@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { useApp } from '../lib/app';
+import PhotoAttach from '../components/PhotoAttach';
 import { FAIL_STATUS, KindBadge, SevBadge, assetLabel, fmt } from '../lib/ui';
 import { STATUS_FLOW, allowedTransitions, changeStatus, isMantenimiento } from '../lib/workflow';
 import type { Failure, FailureStatus } from '../lib/types';
@@ -11,7 +12,7 @@ export default function Kanban() {
   const { data, me, can, reload } = useApp();
   const [kind, setKind] = useState(''); const [area, setArea] = useState(''); const [mine, setMine] = useState(false);
   const [move, setMove] = useState<{ f: Failure; to: FailureStatus } | null>(null);
-  const [comment, setComment] = useState(''); const [enc, setEnc] = useState(''); const [sol, setSol] = useState('');
+  const [comment, setComment] = useState(''); const [enc, setEnc] = useState(''); const [sol, setSol] = useState(''); const [shots, setShots] = useState<string[]>([]);
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
   const [drag, setDrag] = useState<string | null>(null);
 
@@ -24,11 +25,11 @@ export default function Kanban() {
   const next = (f: Failure) => allowedTransitions(f, me, data.assets, data.assignments);
   const mantList = data.profiles.filter((p) => p.rol === 'mantenimiento' || p.rol === 'admin');
 
-  const ask = (f: Failure, to: FailureStatus) => { setMove({ f, to }); setComment(''); setSol(f.nota_solucion ?? ''); setEnc(f.encargado_id ?? ''); setErr(''); };
+  const ask = (f: Failure, to: FailureStatus) => { setMove({ f, to }); setComment(''); setSol(f.nota_solucion ?? ''); setShots([]); setEnc(f.encargado_id ?? ''); setErr(''); };
   const confirm = async () => {
     if (!move) return;
     setBusy(true); setErr('');
-    try { await changeStatus(move.f, move.to, me!.id, comment, enc || null, move.to === 'resuelto' ? sol : undefined); setMove(null); await reload(); }
+    try { await changeStatus(move.f, move.to, me!.id, comment, enc || null, move.to === 'resuelto' ? sol : undefined, shots); setMove(null); await reload(); }
     catch (e) { setErr(e instanceof Error ? e.message : 'No se pudo cambiar el estado.'); } finally { setBusy(false); }
   };
   const drop = (to: FailureStatus) => {
@@ -77,6 +78,7 @@ export default function Kanban() {
             {move.to === 'resuelto' && <label className="f">Solución aplicada *<textarea value={sol} onChange={(e) => setSol(e.target.value)} placeholder="Qué se hizo para resolver el problema" /></label>}
             {move.to === 'cerrado' && <div className="alert">Al cerrar das por validada la reparación.</div>}
             <label className="f">Comentario (opcional)<textarea autoFocus value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Diagnóstico, acción tomada, repuestos, validación…" /></label>
+            <PhotoAttach value={shots} onChange={setShots} />
             {err && <div className="alert red">{err}</div>}
             <div className="row"><button className="btn" disabled={busy} onClick={confirm}>Confirmar</button><button className="btn ghost" disabled={busy} onClick={() => setMove(null)}>Cancelar</button></div>
           </div>
