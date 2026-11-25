@@ -27,17 +27,19 @@ function mostrar() {
 }
 
 /** Animación de entrada con el logo GMM: aparecen las letras, entran las barras azul y naranja, un destello recorre el logo. */
+const fin = () => window.dispatchEvent(new Event('gmm-splash-fin')); // avisa que terminó (la ventana de instalación espera este aviso)
+
 export default function Splash() {
   const [on, setOn] = useState(mostrar);
   const [soft] = useState(reducida);
   useEffect(() => {
     if (!on) return;
-    const t = window.setTimeout(() => setOn(false), soft ? 1900 : 3300); // animación + desvanecido final
+    const t = window.setTimeout(() => { setOn(false); fin(); }, soft ? 1900 : 3300); // animación + desvanecido final
     return () => window.clearTimeout(t);
   }, [on]);
   if (!on) return null;
   return (
-    <div className={`splash${soft ? ' soft' : ''}`} role="presentation" onClick={() => setOn(false)} aria-hidden="true">
+    <div className={`splash${soft ? ' soft' : ''}`} role="presentation" onClick={() => { setOn(false); fin(); }} aria-hidden="true">
       <div className="splash-logo">
         <div className="splash-word">
           <span className="sp-l sp-g"><span className="sp-bar-top" /><span className="sp-bar-bot" />G</span>

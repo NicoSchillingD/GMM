@@ -6,10 +6,11 @@ import './styles/base.css';
 import { AppProvider } from './lib/app';
 import { App } from './App';
 import Splash, { marcarSplashVisto } from './components/Splash';
+import InstallGuide from './components/InstallGuide';
 
 registerSW({ immediate: true });
 // Al activarse una versión nueva la App se recarga sola: esa recarga no debe repetir la animación de entrada.
 navigator.serviceWorker?.addEventListener('controllerchange', marcarSplashVisto);
 createRoot(document.getElementById('root')!).render(
-  <StrictMode><BrowserRouter><AppProvider><App /></AppProvider><Splash /></BrowserRouter></StrictMode>,
+  <StrictMode><BrowserRouter><AppProvider><App /></AppProvider><Splash /><InstallGuide /></BrowserRouter></StrictMode>,
 );

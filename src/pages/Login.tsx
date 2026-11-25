@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../lib/app';
 import { isDemo } from '../lib/db';
+import { ABRIR_INSTALAR } from '../components/InstallGuide';
 
 export default function Login() {
   const { signIn, resetPassword, data } = useApp();
@@ -38,7 +39,8 @@ export default function Login() {
             <button type="button" className="btn ghost sm" onClick={forgot}>Olvidé mi contraseña</button>
           </form>
         )}
-      </div>
+        <button type="button" className="btn ghost sm" style={{ marginTop: 12 }} onClick={() => window.dispatchEvent(new Event(ABRIR_INSTALAR))}>Cómo instalar la App en el inicio</button>
+        </div>
     </div>
   );
 }
