@@ -97,3 +97,4 @@ tr.click{cursor:pointer}tr.click:hover{background:var(--gray-050)}
   .users .row select,.users .row input{max-width:100%!important;flex:1 1 140px}
 }
 .grid>*{min-width:0}.f input,.f select,.f textarea{min-width:0;max-width:100%}
+a.card.kpi{display:block;text-decoration:none}a.card.kpi:hover{border-color:var(--celeste)}

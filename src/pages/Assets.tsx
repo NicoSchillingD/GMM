@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Plus, QrCode } from 'lucide-react';
 import { useApp } from '../lib/app';
 import { insert, uid, update } from '../lib/db';
@@ -10,7 +10,7 @@ const blank = (): Asset => ({ id: uid(), parent_id: null, area_id: null, tag: ''
 
 export default function Assets() {
   const { data, can, reload } = useApp();
-  const [q, setQ] = useState(''); const [area, setArea] = useState(''); const [st, setSt] = useState('');
+  const [q, setQ] = useState(''); const [area, setArea] = useState(''); const [sp] = useSearchParams(); const [st, setSt] = useState(sp.get('estado') ?? '');
   const [edit, setEdit] = useState<Asset | null>(null);
   const [view, setView] = useState<'arbol' | 'tabla'>('arbol');
   const match = (a: Asset) => (!area || a.area_id === area) && (!st || a.estado === st)
