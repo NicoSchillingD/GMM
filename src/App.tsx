@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { AlertTriangle, BarChart3, Boxes, CalendarClock, LayoutDashboard, LogOut, Users, Wallet, ClipboardList, Columns3 } from 'lucide-react';
+import { AlertTriangle, BarChart3, Boxes, CalendarClock, LayoutDashboard, LogOut, Users, Wallet, ClipboardList, Columns3, Smartphone } from 'lucide-react';
 import { useApp } from './lib/app';
 import { isDemo } from './lib/db';
 import Login from './pages/Login';
@@ -16,6 +16,7 @@ import Costs from './pages/Costs';
 import Reports from './pages/Reports';
 import UsersPage from './pages/Users';
 import Kanban from './pages/Kanban';
+import { ABRIR_INSTALAR, instalada } from './components/InstallGuide';
 import Labels from './pages/Labels';
 
 const links = [
@@ -45,6 +46,7 @@ export function App() {
         <div style={{ padding: 8, fontSize: 12 }}>
           <div>{me.nombre}</div><div style={{ opacity: .65 }}>{me.rol}{isDemo && ' · demo'}</div>
           <button className="btn ghost sm" style={{ color: '#fff', marginTop: 6 }} onClick={signOut}><LogOut size={14} />Salir</button>
+          {!instalada() && <button className="btn ghost sm" style={{ color: '#fff', marginTop: 6 }} onClick={() => window.dispatchEvent(new Event(ABRIR_INSTALAR))}><Smartphone size={14} />Instalar la App</button>}
           <div style={{ opacity: .5, marginTop: 6 }}>Versión {__BUILD__}</div>
         </div>
       </aside>
@@ -70,6 +72,7 @@ export function App() {
       <nav className="tabbar" ref={bar} aria-label="Secciones">
         {items}
         <button type="button" onClick={signOut}><LogOut size={18} />Salir</button>
+        {!instalada() && <button type="button" onClick={() => window.dispatchEvent(new Event(ABRIR_INSTALAR))}><Smartphone size={18} />Instalar</button>}
         <span className="ver">Versión<br />{__BUILD__}</span>
       </nav>
     </div>

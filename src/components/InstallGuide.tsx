@@ -5,7 +5,7 @@ const KEY = 'gmm-instalar-oculto';
 export const SPLASH_FIN = 'gmm-splash-fin';
 export const ABRIR_INSTALAR = 'gmm-abrir-instalar';
 
-const instalada = () => {
+export const instalada = () => {
   try { return window.matchMedia('(display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true; } catch { return false; }
 };
 const oculta = () => { try { return localStorage.getItem(KEY) === '1'; } catch { return false; } };
@@ -21,7 +21,8 @@ export default function InstallGuide() {
 
   useEffect(() => {
     // Con la animación de entrada en marcha, la ventana espera a que termine.
-    const abrir = () => { if (!instalada() && !oculta()) setOpen(true); };
+    const forzada = new URLSearchParams(window.location.search).has('instalar'); // …?instalar=1 la muestra siempre (para comprobarla)
+    const abrir = () => { if (forzada || (!instalada() && !oculta())) setOpen(true); };
     const splash = document.querySelector('.splash');
     if (splash) window.addEventListener(SPLASH_FIN, abrir, { once: true }); else abrir();
     const manual = () => { setNever(false); setOpen(true); };            // abierta a pedido (enlace "Cómo instalar la App")
