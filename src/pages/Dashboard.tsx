@@ -1,3 +1,4 @@
+import { BrandStrip } from '../components/Brand';
 import PushBanner from '../components/PushBanner';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
@@ -21,6 +22,7 @@ export default function Dashboard() {
 
   return (
     <>
+      <BrandStrip />
       <div className="top"><h1>Dashboard</h1>{can('supervisor', 'mantenimiento') && <Link className="btn accent" to="/fallas/nueva"><Plus size={16} />Reportar falla</Link>}</div>
       <PushBanner />
       <div className="grid" style={{ marginBottom: 16 }}>

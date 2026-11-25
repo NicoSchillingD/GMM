@@ -1,3 +1,4 @@
+import { Top } from '../components/Brand';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Printer } from 'lucide-react';
@@ -37,8 +38,8 @@ export default function Labels() {
   const areaName = (id: string | null) => data.areas.find((x) => x.id === id)?.nombre;
   return (
     <>
-      <div className="top noprint"><div><Link to="/activos">← Activos</Link><h1>Etiquetas QR</h1></div>
-        <button className="btn accent" onClick={() => window.print()}><Printer size={16} />Imprimir</button></div>
+      <Top className="noprint" low><div><Link to="/activos">← Activos</Link><h1>Etiquetas QR</h1></div>
+        <button className="btn accent" onClick={() => window.print()}><Printer size={16} />Imprimir</button></Top>
       <div className="card row noprint" style={{ marginBottom: 16 }}>
         <select style={{ maxWidth: 260 }} value={area} onChange={(e) => setSp(e.target.value ? { area: e.target.value } : {})}><option value="">Todas las áreas</option>{data.areas.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}</select>
         <span className="muted">{list.length} etiquetas · cada QR abre el reporte de falla con ese equipo ya elegido.</span>

@@ -1,3 +1,4 @@
+import { Top } from '../components/Brand';
 import { useState } from 'react';
 import { useApp } from '../lib/app';
 import { insert, isDemo, remove, supabase, uid, update } from '../lib/db';
@@ -102,7 +103,7 @@ export default function UsersPage() {
   };
   return (
     <>
-      <div className="top"><h1>Usuarios y asignaciones</h1></div>
+      <Top><h1>Usuarios y asignaciones</h1></Top>
       <div className={`grid g2 users ${sel ? 'has-sel' : ''}`}>
         <div className="card"><h2>Perfiles</h2>
           {sel && <button type="button" className="btn ghost sm only-mobile" style={{ marginTop: 8 }} onClick={() => { setSel(null); setEd(null); }}>← Volver a la lista de usuarios</button>}

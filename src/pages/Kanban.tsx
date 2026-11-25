@@ -1,3 +1,4 @@
+import { Top } from '../components/Brand';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
@@ -41,7 +42,7 @@ export default function Kanban() {
 
   return (
     <>
-      <div className="top"><h1>Tablero de fallas y hallazgos</h1>{can('supervisor', 'mantenimiento') && <Link className="btn accent" to="/fallas/nueva"><Plus size={16} />Reportar</Link>}</div>
+      <Top><h1>Tablero de fallas y hallazgos</h1>{can('supervisor', 'mantenimiento') && <Link className="btn accent" to="/fallas/nueva"><Plus size={16} />Reportar</Link>}</Top>
       <div className="card row" style={{ marginBottom: 16 }}>
         <select style={{ maxWidth: 170 }} value={kind} onChange={(e) => setKind(e.target.value)}><option value="">Fallas y hallazgos</option><option value="falla">Solo fallas</option><option value="hallazgo">Solo hallazgos</option></select>
         <select style={{ maxWidth: 220 }} value={area} onChange={(e) => setArea(e.target.value)}><option value="">Todas las áreas</option>{data.areas.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}</select>

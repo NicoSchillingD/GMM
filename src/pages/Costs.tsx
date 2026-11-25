@@ -1,3 +1,4 @@
+import { Top } from '../components/Brand';
 import { Link } from 'react-router-dom';
 import { useApp } from '../lib/app';
 import { assetLabel, fmtDate } from '../lib/ui';
@@ -10,7 +11,7 @@ export default function Costs() {
   const total = data.cost_docs.reduce((s, c) => s + c.monto, 0);
   return (
     <>
-      <div className="top"><h1>Costos</h1></div>
+      <Top><h1>Costos</h1></Top>
       <div className="grid g2">
         <div className="card kpi"><div className="v">${total.toLocaleString('es-CL')}</div><div className="l">Total documentos asociados</div></div>
         <div className="card"><h2>Por activo</h2><table><tbody>{[...byAsset].sort((a, b) => b[1] - a[1]).map(([id, m]) => <tr key={id}><td><Link to={`/activos/${id}`}>{assetLabel(data.assets.find((a) => a.id === id))}</Link></td><td>${m.toLocaleString('es-CL')}</td></tr>)}</tbody></table></div>

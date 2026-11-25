@@ -1,3 +1,4 @@
+import { Top } from '../components/Brand';
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Plus, QrCode } from 'lucide-react';
@@ -48,13 +49,13 @@ export default function Assets() {
 
   return (
     <>
-      <div className="top"><h1>Activos</h1>
+      <Top><h1>Activos</h1>
         <div className="row">
           <button className="btn sec" onClick={() => setView(view === 'arbol' ? 'tabla' : 'arbol')}>{view === 'arbol' ? 'Ver tabla' : 'Ver árbol'}</button>
           {can('mantenimiento') && <Link className="btn sec" to="/etiquetas"><QrCode size={16} />Etiquetas QR</Link>}
           {can('mantenimiento') && <button className="btn accent" onClick={() => setEdit(blank())}><Plus size={16} />Nuevo activo / componente</button>}
         </div>
-      </div>
+      </Top>
       <div className="card row" style={{ marginBottom: 16 }}>
         <input style={{ maxWidth: 260 }} placeholder="Buscar TAG, tipo, marca…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select style={{ maxWidth: 200 }} value={area} onChange={(e) => setArea(e.target.value)}><option value="">Todas las áreas</option>{data.areas.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}</select>

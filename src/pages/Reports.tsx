@@ -1,3 +1,4 @@
+import { Top } from '../components/Brand';
 import { useState } from 'react';
 import { Download } from 'lucide-react';
 import { useApp } from '../lib/app';
@@ -36,7 +37,7 @@ export default function Reports() {
 
   return (
     <>
-      <div className="top"><h1>Reportes</h1><button className="btn sec" onClick={csv}><Download size={16} />Exportar CSV</button></div>
+      <Top><h1>Reportes</h1><button className="btn sec" onClick={csv}><Download size={16} />Exportar CSV</button></Top>
       <div className="card row" style={{ marginBottom: 16 }}>
         <label className="f">Desde<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
         <label className="f">Hasta<input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></label>

@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import BrandBar from './components/Brand';
 import { AlertTriangle, BarChart3, Boxes, CalendarClock, LayoutDashboard, LogOut, Users, Wallet, ClipboardList, Columns3, Smartphone } from 'lucide-react';
 import { useApp } from './lib/app';
 import { isDemo } from './lib/db';
@@ -52,7 +51,6 @@ export function App() {
         </div>
       </aside>
       <main className="main">
-        <BrandBar dashboard={loc.pathname === '/'} />
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/activos" element={<Assets />} />

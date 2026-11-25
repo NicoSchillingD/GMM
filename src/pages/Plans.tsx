@@ -1,3 +1,4 @@
+import { Top } from '../components/Brand';
 import { useState } from 'react';
 import { useApp } from '../lib/app';
 import { insert, remove, uid, update } from '../lib/db';
@@ -25,7 +26,7 @@ export default function Plans() {
   const rows = [...data.plans].sort((a, b) => a.proxima_fecha.localeCompare(b.proxima_fecha));
   return (
     <>
-      <div className="top"><h1>Mantenimiento preventivo</h1></div>
+      <Top><h1>Mantenimiento preventivo</h1></Top>
       {can('mantenimiento') && <div className="card form" style={{ marginBottom: 16 }}><h2>Nuevo plan</h2>
         <div className="grid g4">
           <label className="f">Activo<select value={f.asset_id} onChange={(e) => setF({ ...f, asset_id: e.target.value })}><option value="">—</option>{data.assets.map((a) => <option key={a.id} value={a.id}>{assetLabel(a)}</option>)}</select></label>

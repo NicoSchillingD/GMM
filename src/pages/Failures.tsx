@@ -1,3 +1,4 @@
+import { Top } from '../components/Brand';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
@@ -10,7 +11,7 @@ export default function Failures() {
   const rows = [...data.failures].filter((f) => (!st || f.estado === st) && (!sev || f.severidad === sev) && (!kind || (f.tipo ?? 'falla') === kind)).sort((a, b) => b.creado.localeCompare(a.creado));
   return (
     <>
-      <div className="top"><h1>Fallas y hallazgos</h1>{can('supervisor', 'mantenimiento') && <Link className="btn accent" to="/fallas/nueva"><Plus size={16} />Reportar</Link>}</div>
+      <Top><h1>Fallas y hallazgos</h1>{can('supervisor', 'mantenimiento') && <Link className="btn accent" to="/fallas/nueva"><Plus size={16} />Reportar</Link>}</Top>
       <div className="card row" style={{ marginBottom: 16 }}>
         <select style={{ maxWidth: 200 }} value={st} onChange={(e) => setSt(e.target.value)}><option value="">Todos los estados</option>{(Object.keys(FAIL_STATUS) as (keyof typeof FAIL_STATUS)[]).map((k) => <option key={k} value={k}>{FAIL_STATUS[k][0]}</option>)}</select>
         <select style={{ maxWidth: 200 }} value={kind} onChange={(e) => setKind(e.target.value)}><option value="">Fallas y hallazgos</option><option value="falla">Fallas</option><option value="hallazgo">Hallazgos</option></select>

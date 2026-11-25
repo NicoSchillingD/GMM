@@ -1,3 +1,4 @@
+import { Top } from '../components/Brand';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Camera, Image as ImageIcon, QrCode, Video, X } from 'lucide-react';
@@ -131,7 +132,7 @@ export default function FailureNew() {
   );
   return (
     <div style={{ maxWidth: 680 }}>
-      <div className="top"><div><Link to="/fallas">← Fallas</Link><h1>{kindChosen ? (tipo === 'falla' ? 'Reportar falla' : 'Reportar hallazgo') : 'Reportar falla o hallazgo'}</h1></div></div>
+      <Top low><div><Link to="/fallas">← Fallas</Link><h1>{kindChosen ? (tipo === 'falla' ? 'Reportar falla' : 'Reportar hallazgo') : 'Reportar falla o hallazgo'}</h1></div></Top>
       <div className="stepbar" aria-label={`Paso ${idx + 1} de ${steps.length}`}>{steps.map((s, i) => <i key={s} className={i <= idx ? 'on' : ''} />)}</div>
       <div className="muted" style={{ margin: '6px 0 12px' }}>Paso {idx + 1} de {steps.length}</div>
       <div className="card form">

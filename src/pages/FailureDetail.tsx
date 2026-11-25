@@ -1,3 +1,4 @@
+import { Top } from '../components/Brand';
 import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Camera, FileText, Loader2 } from 'lucide-react';
@@ -82,7 +83,7 @@ export default function FailureDetail() {
   };
   return (
     <div style={{ maxWidth: 820 }}>
-      <div className="top"><div><Link to="/fallas">← Fallas</Link><h1>#{f.numero} · {assetLabel(asset)}</h1></div><div className="row"><KindBadge k={f.tipo} /><SevBadge s={f.severidad} /><FailBadge s={f.estado} /></div></div>
+      <Top low><div><Link to="/fallas">← Fallas</Link><h1>#{f.numero} · {assetLabel(asset)}</h1></div><div className="row"><KindBadge k={f.tipo} /><SevBadge s={f.severidad} /><FailBadge s={f.estado} /></div></Top>
       {isAdmin && <div className="row" style={{ marginBottom: 12 }}><button className="btn sec sm" disabled={delBusy} onClick={() => setEditing(!editing)}>{editing ? 'Cerrar edición' : 'Editar'}</button><button className="btn danger sm" disabled={delBusy} onClick={remove}>{delBusy ? 'Eliminando…' : 'Eliminar'}</button></div>}
       {delErr && <div className="alert red" style={{ marginBottom: 12 }}>{delErr}</div>}
       {isAdmin && editing && <FailureEdit key={f.id + f.descripcion} f={f} onDone={() => setEditing(false)} />}

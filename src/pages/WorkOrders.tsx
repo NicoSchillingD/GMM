@@ -1,3 +1,4 @@
+import { Top } from '../components/Brand';
 import { useApp } from '../lib/app';
 import { update } from '../lib/db';
 import { Badge, assetLabel, fmt } from '../lib/ui';
@@ -13,7 +14,7 @@ export default function WorkOrders() {
   const rows = [...data.work_orders].sort((a, b) => b.creado.localeCompare(a.creado));
   return (
     <>
-      <div className="top"><h1>Órdenes de trabajo</h1></div>
+      <Top><h1>Órdenes de trabajo</h1></Top>
       <div className="card"><table className="stack"><thead><tr><th>Creada</th><th>Activo</th><th>Tipo</th><th>Descripción</th><th>Estado</th><th /></tr></thead><tbody>
         {rows.map((w) => <tr key={w.id}><td>{fmt(w.creado)}</td><td>{assetLabel(data.assets.find((a) => a.id === w.asset_id))}</td><td><Badge t={w.tipo} c={w.tipo === 'preventivo' ? 'info' : 'warn'} /></td><td style={{ whiteSpace: 'pre-line' }}>{w.descripcion}</td>
           <td><Badge t={w.estado} c={w.estado === 'completada' ? 'ok' : w.estado === 'en_curso' ? 'info' : 'warn'} /></td>
