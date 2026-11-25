@@ -16,11 +16,22 @@ export function mttr(fs: Failure[]): number | null {
   return done.reduce((s, f) => s + hours(f.inicio_detencion!, f.liberacion!), 0) / done.length;
 }
 
-/** MTBF: horas operativas en el periodo (menos detención) divididas por nº de fallas con detención. */
-export function mtbf(fs: Failure[], from: Date, to: Date, assets = 1, now = new Date()): number | null {
-  const stops = fs.filter((f) => f.detiene_produccion && f.inicio_detencion);
-  if (!stops.length) return null;
-  const total = ((to.getTime() - from.getTime()) / H) * assets;
+/** Mínimo de fallas con detención que debe tener un equipo para calcular su MTBF. */
+export const MIN_FAILURES_MTBF = 2;
+
+/**
+ * MTBF: horas operativas del periodo (menos detención) divididas por el nº de fallas con detención.
+ * Solo cuentan los equipos con al menos 2 fallas con detención; si ninguno llega a 2, no hay MTBF (null).
+ * Con varios equipos, es el agregado de los que cumplen el mínimo.
+ */
+export function mtbf(fs: Failure[], from: Date, to: Date, now = new Date()): number | null {
+  const byAsset = new Map<string, Failure[]>();
+  for (const f of fs) if (f.detiene_produccion && f.inicio_detencion) byAsset.set(f.asset_id, [...(byAsset.get(f.asset_id) ?? []), f]);
+  const eligible = [...byAsset.values()].filter((x) => x.length >= MIN_FAILURES_MTBF);
+  if (!eligible.length) return null;
+  const period = (to.getTime() - from.getTime()) / H;
+  const total = period * eligible.length;
+  const stops = eligible.flat();
   const down = stops.reduce((s, f) => s + downtimeHours(f, now), 0);
   return Math.max(0, total - down) / stops.length;
 }
