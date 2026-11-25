@@ -3,8 +3,15 @@ import { useEffect, useState } from 'react';
 const KEY = 'gmm-splash-ts';
 const ANTIRREBOTE = 20_000; // ms: una recarga inmediata no repite la animación
 
-/** Con "reducir movimiento" se muestra una versión suave (solo se desvanece), no se omite. */
-const reducida = () => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } };
+/**
+ * Con "Reducir movimiento" del sistema, la animación completa se reemplazaría por una versión suave (solo el logo, sin movimiento).
+ * Está en false a pedido: la animación es corta (3 s), no parpadea y se puede saltar tocando. Cambiar a true para respetar el ajuste.
+ */
+const RESPETAR_REDUCIR_MOVIMIENTO = false;
+const reducida = () => { try { return RESPETAR_REDUCIR_MOVIMIENTO && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } };
+
+/** Marca "recién mostrada": la usan las recargas por actualización de la App para no repetir la animación. */
+export const marcarSplashVisto = () => { try { localStorage.setItem(KEY, String(Date.now())); } catch { /* ignorar */ } };
 
 /**
  * ¿Mostrar la animación? En cada apertura de la App (al iniciarla de cero o recargar), salvo si se mostró hace menos de 20 s.
