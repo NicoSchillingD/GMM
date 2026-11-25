@@ -32,7 +32,7 @@ export interface WorkOrder {
 }
 export interface CostDoc {
   id: string; tipo: 'compra' | 'gasto' | 'factura'; numero: string; proveedor: string; monto: number;
-  fecha: string; failure_id: string | null; work_order_id: string | null; archivo: string | null;
+  fecha: string; fecha_llegada?: string | null; failure_id: string | null; work_order_id: string | null; archivo: string | null;
 }
 
 export interface Tables {

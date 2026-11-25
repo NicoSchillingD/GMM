@@ -16,6 +16,8 @@ export const KindBadge = ({ k }: { k?: FailureKind }) => <Badge t={KIND[k ?? 'fa
 export const SevBadge = ({ s }: { s: 'urgente' | 'informativo' }) => <Badge t={s === 'urgente' ? 'Urgente' : 'Informativo'} c={s === 'urgente' ? 'bad' : 'info'} />;
 export const assetLabel = (a?: Asset) => (a ? `${a.tag || 'S/TAG'} · ${a.tipo} ${a.marca}`.trim() : '—');
 export const fmt = (iso?: string | null) => (iso ? new Date(iso).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' }) : '—');
+/** Fecha sin hora (AAAA-MM-DD) en formato local, sin desfase por zona horaria. */
+export const fmtDate = (d?: string | null) => (d ? new Date(`${d.slice(0, 10)}T12:00:00`).toLocaleDateString('es-CL') : '—');
 export const hrs = (h: number | null) => (h == null ? '—' : `${h.toFixed(1)} h`);
 
 export const MAX_PHOTOS = 3;

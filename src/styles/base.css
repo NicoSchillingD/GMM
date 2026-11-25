@@ -60,6 +60,7 @@ tr.click{cursor:pointer}tr.click:hover{background:var(--gray-050)}
   .tabbar::-webkit-scrollbar{display:none}
   .tabbar .ver{flex:0 0 72px;color:#7f9aab;font-size:10px;text-align:center;align-self:center}
   .tabbar a,.tabbar button{color:#cfe0e9;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 6px;flex:0 0 72px;background:none;border:0;font-family:inherit;cursor:pointer}.tabbar a.active,.tabbar button.active{color:var(--naranjo)}
+  table.labeled td[data-label]::before{content:attr(data-label) ': ';color:var(--fg-muted);font-size:12px}
   table.stack thead{display:none}table.stack td{display:block;border:0;padding:2px 8px}table.stack tr{display:block;border-bottom:1px solid var(--border-1);padding:8px 0}
 }
 .cam{position:fixed;inset:0;z-index:50;background:#000;display:flex;flex-direction:column;color:#fff}
@@ -95,3 +96,4 @@ tr.click{cursor:pointer}tr.click:hover{background:var(--gray-050)}
   .users.has-sel .u-hide-sel{display:none}
   .users .row select,.users .row input{max-width:100%!important;flex:1 1 140px}
 }
+.grid>*{min-width:0}.f input,.f select,.f textarea{min-width:0;max-width:100%}

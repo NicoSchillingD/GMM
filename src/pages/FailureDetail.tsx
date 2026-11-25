@@ -5,7 +5,7 @@ import { useApp } from '../lib/app';
 import { insert, isDemo, uid, update } from '../lib/db';
 import { scanInvoice } from '../lib/scanInvoice';
 import { notifyEvent } from '../lib/push';
-import { FAIL_STATUS, FailBadge, KindBadge, SevBadge, assetLabel, fmt, hrs } from '../lib/ui';
+import { fmtDate, FAIL_STATUS, FailBadge, KindBadge, SevBadge, assetLabel, fmt, hrs } from '../lib/ui';
 import { downtimeHours } from '../lib/kpi';
 import { failureExtraFields } from '../config/failureFields';
 import FailureEdit from '../components/FailureEdit';
@@ -18,7 +18,9 @@ export default function FailureDetail() {
   const { data, me, can, reload } = useApp();
   const f = data.failures.find((x) => x.id === id);
   const [txt, setTxt] = useState(''); const [st, setSt] = useState<FailureStatus | ''>('');
-  const [cost, setCost] = useState({ tipo: 'compra' as 'compra' | 'gasto' | 'factura', numero: '', proveedor: '', monto: '', fecha: '' });
+  const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  const [cost, setCost] = useState({ tipo: 'compra' as 'compra' | 'gasto' | 'factura', numero: '', proveedor: '', monto: '', fecha: today(), llegada: '' });
+  const [costErr, setCostErr] = useState('');
   const [scanBusy, setScanBusy] = useState(false); const [scanMsg, setScanMsg] = useState('');
   const [err, setErr] = useState('');
   const [sol, setSol] = useState<string | null>(null); // null = sin editar: se usa la solución ya guardada
@@ -53,9 +55,15 @@ export default function FailureDetail() {
     setTxt(''); setSt(''); setSol(null); await reload();
   };
   const addCost = async () => {
-    if (!cost.monto) return;
-    await insert('cost_docs', { id: uid(), tipo: cost.tipo, numero: cost.numero, proveedor: cost.proveedor, monto: Number(cost.monto), fecha: cost.fecha || new Date().toISOString().slice(0, 10), failure_id: f.id, work_order_id: null, archivo: null });
-    setCost({ ...cost, numero: '', proveedor: '', monto: '', fecha: '' }); setScanMsg(''); await reload();
+    setCostErr('');
+    if (!cost.monto || Number(cost.monto) <= 0) return setCostErr('Indica el monto.');
+    if (!cost.fecha) return setCostErr('Indica la fecha de compra.');
+    if (cost.tipo === 'compra' && !cost.llegada) return setCostErr('Indica la fecha estimada de llegada de la compra.');
+    if (cost.tipo === 'compra' && cost.llegada < cost.fecha) return setCostErr('La llegada estimada no puede ser anterior a la fecha de compra.');
+    try {
+      await insert('cost_docs', { id: uid(), tipo: cost.tipo, numero: cost.numero, proveedor: cost.proveedor, monto: Number(cost.monto), fecha: cost.fecha, fecha_llegada: cost.tipo === 'compra' ? cost.llegada : null, failure_id: f.id, work_order_id: null, archivo: null });
+      setCost({ ...cost, numero: '', proveedor: '', monto: '', fecha: today(), llegada: '' }); setScanMsg(''); await reload();
+    } catch (e) { setCostErr(e instanceof Error ? e.message : 'No se pudo guardar el costo.'); }
   };
   /** Lee la factura/boleta y rellena el formulario; el usuario revisa y confirma con "Agregar". */
   const scan = async (file?: File | null) => {
@@ -63,7 +71,7 @@ export default function FailureDetail() {
     setScanBusy(true); setScanMsg('');
     try {
       const r = await scanInvoice(file);
-      setCost({ tipo: r.tipo, numero: r.numero, proveedor: r.proveedor, monto: r.monto ? String(r.monto) : '', fecha: r.fecha });
+      setCost((c) => ({ tipo: r.tipo, numero: r.numero, proveedor: r.proveedor, monto: r.monto ? String(r.monto) : '', fecha: r.fecha || c.fecha, llegada: '' }));
       setScanMsg(`Leído${r.rut ? ` (RUT ${r.rut})` : ''}. Revisa los datos y toca "Agregar".`);
     } catch (e) { setScanMsg(e instanceof Error ? e.message : 'No se pudo leer el documento.'); }
     finally { setScanBusy(false); }
@@ -115,7 +123,10 @@ export default function FailureDetail() {
       </div>
 
       <div className="card" style={{ marginTop: 16 }}><h2>Costos asociados · ${costs.reduce((s, c) => s + c.monto, 0).toLocaleString('es-CL')}</h2>
-        <table className="stack"><tbody>{costs.map((c) => <tr key={c.id}><td>{c.tipo}</td><td>{c.numero}</td><td>{c.proveedor}</td><td>${c.monto.toLocaleString('es-CL')}</td></tr>)}</tbody></table>
+        {!!costs.length && <table className="stack labeled"><thead><tr><th>Tipo</th><th>N° documento</th><th>Proveedor</th><th>Fecha de compra</th><th>Llegada estimada</th><th style={{ textAlign: 'right' }}>Monto</th></tr></thead><tbody>{costs.map((c) => <tr key={c.id}><td data-label="Tipo" style={{ textTransform: 'capitalize' }}>{c.tipo}</td><td data-label="N° documento">{c.numero || '—'}</td><td data-label="Proveedor">{c.proveedor || '—'}</td><td data-label="Fecha de compra">{fmtDate(c.fecha)}</td><td data-label="Llegada estimada">{c.tipo !== 'compra' ? 'No aplica' : isMant
+            ? <input type="date" aria-label={`Llegada estimada de la compra ${c.numero}`} min={c.fecha} defaultValue={c.fecha_llegada ?? ''} key={c.fecha_llegada ?? ''} style={{ minWidth: 140 }} onChange={async (e) => { if (e.target.value && e.target.value >= c.fecha) { await update('cost_docs', c.id, { fecha_llegada: e.target.value }); await reload(); } }} />
+            : fmtDate(c.fecha_llegada)}</td><td data-label="Monto" style={{ textAlign: 'right' }}>${c.monto.toLocaleString('es-CL')}</td></tr>)}</tbody></table>}
+        {!costs.length && <p className="muted">Aún sin costos registrados.</p>}
         {isMant && <div className="form" style={{ marginTop: 12 }}>
           {!isDemo && <div className="row">
             <button type="button" className="btn sec" disabled={scanBusy} onClick={() => camIn.current?.click()}>{scanBusy ? <Loader2 size={16} className="spin" /> : <Camera size={16} />}Escanear factura o boleta</button>
@@ -125,14 +136,16 @@ export default function FailureDetail() {
           </div>}
           {scanBusy && <div className="muted">Leyendo el documento…</div>}
           {scanMsg && !scanBusy && <div className="alert">{scanMsg}</div>}
-          <div className="row">
-          <select style={{ maxWidth: 120 }} value={cost.tipo} onChange={(e) => setCost({ ...cost, tipo: e.target.value as typeof cost.tipo })}><option value="compra">Compra</option><option value="gasto">Gasto</option><option value="factura">Factura</option></select>
-          <input style={{ maxWidth: 130 }} placeholder="N° documento" value={cost.numero} onChange={(e) => setCost({ ...cost, numero: e.target.value })} />
-          <input style={{ maxWidth: 160 }} placeholder="Proveedor" value={cost.proveedor} onChange={(e) => setCost({ ...cost, proveedor: e.target.value })} />
-          <input style={{ maxWidth: 150 }} type="date" aria-label="Fecha del documento" value={cost.fecha} onChange={(e) => setCost({ ...cost, fecha: e.target.value })} />
-          <input style={{ maxWidth: 120 }} type="number" placeholder="Monto CLP" value={cost.monto} onChange={(e) => setCost({ ...cost, monto: e.target.value })} />
-          <button className="btn sec" onClick={addCost}>Agregar</button>
+          <div className="grid g4">
+            <label className="f">Tipo<select value={cost.tipo} onChange={(e) => setCost({ ...cost, tipo: e.target.value as typeof cost.tipo })}><option value="compra">Compra</option><option value="gasto">Gasto</option><option value="factura">Factura</option></select></label>
+            <label className="f">N° documento<input value={cost.numero} onChange={(e) => setCost({ ...cost, numero: e.target.value })} /></label>
+            <label className="f">Proveedor<input value={cost.proveedor} onChange={(e) => setCost({ ...cost, proveedor: e.target.value })} /></label>
+            <label className="f">Fecha de compra *<input type="date" value={cost.fecha} onChange={(e) => setCost({ ...cost, fecha: e.target.value })} /></label>
+            <label className="f">Llegada estimada{cost.tipo === 'compra' ? ' *' : ''}<input type="date" min={cost.fecha || undefined} disabled={cost.tipo !== 'compra'} title={cost.tipo !== 'compra' ? 'Solo aplica a compras' : undefined} value={cost.tipo === 'compra' ? cost.llegada : ''} onChange={(e) => setCost({ ...cost, llegada: e.target.value })} /></label>
+            <label className="f">Monto CLP *<input type="number" inputMode="numeric" min="0" value={cost.monto} onChange={(e) => setCost({ ...cost, monto: e.target.value })} /></label>
           </div>
+          {costErr && <div className="alert red">{costErr}</div>}
+          <div className="row"><button className="btn sec" onClick={addCost}>Agregar costo</button></div>
         </div>}
       </div>
     </div>
