@@ -100,7 +100,7 @@ tr.click{cursor:pointer}tr.click:hover{background:var(--gray-050)}
 a.card.kpi{display:block;text-decoration:none}a.card.kpi:hover{border-color:var(--celeste)}
 
 /* ── Animación de entrada (logo GMM) ───────────────────────────────────────── */
-.splash{position:fixed;inset:0;z-index:1000;background:#fff;display:grid;place-items:center;animation:sp-out .45s ease-in 2.85s forwards;cursor:pointer}
+.splash{position:fixed;top:0;right:0;bottom:0;left:0;z-index:1000;background:#fff;display:grid;place-items:center;animation:sp-out .45s ease-in 2.85s forwards;cursor:pointer}
 .splash-logo{display:flex;flex-direction:column;align-items:center;gap:clamp(14px,3.2vw,26px)}
 .splash-word{position:relative;display:flex;align-items:flex-end;font:700 clamp(72px,22vw,150px)/1 var(--font-body);letter-spacing:-.02em;color:var(--navy-800,#00324b);padding-top:.2em}
 .sp-l{position:relative;display:inline-block;opacity:0}
@@ -125,3 +125,9 @@ a.card.kpi{display:block;text-decoration:none}a.card.kpi:hover{border-color:var(
 @keyframes sp-glint{0%{opacity:1;-webkit-mask-position:100% 0;mask-position:100% 0}99%{opacity:1;-webkit-mask-position:0 0;mask-position:0 0}100%{opacity:0;-webkit-mask-position:0 0;mask-position:0 0}}
 @keyframes sp-brand{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @keyframes sp-out{to{opacity:0}}
+/* Versión suave ("reducir movimiento"): sin desplazamientos ni destello, solo aparece y se desvanece */
+.splash.soft{animation:sp-out .4s ease-in 1.45s forwards}
+.splash.soft .sp-l,.splash.soft .sp-bar-top,.splash.soft .sp-bar-bot,.splash.soft .splash-brand{animation:sp-soft .5s ease-out .1s forwards;transform:none}
+.splash.soft .splash-brand{animation-delay:.3s}
+.splash.soft .splash-glint{display:none}
+@keyframes sp-soft{from{opacity:0}to{opacity:1}}
