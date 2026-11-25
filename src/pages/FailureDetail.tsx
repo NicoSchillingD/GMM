@@ -7,6 +7,7 @@ import { scanInvoice } from '../lib/scanInvoice';
 import { notifyEvent } from '../lib/push';
 import { fmtDate, FAIL_STATUS, FailBadge, KindBadge, SevBadge, assetLabel, fmt, hrs } from '../lib/ui';
 import { downtimeHours } from '../lib/kpi';
+import { makeSchedOf, responseHours } from '../lib/schedule';
 import { failureExtraFields } from '../config/failureFields';
 import FailureEdit from '../components/FailureEdit';
 import PhotoAttach from '../components/PhotoAttach';
@@ -101,6 +102,7 @@ export default function FailureDetail() {
         <div className="grid g4">
           <div><div className="muted">Área</div>{data.areas.find((a) => a.id === asset?.area_id)?.nombre ?? '—'}</div>
           <div><div className="muted">Fecha inicio solución</div>{fmt(f.fecha_inicio_solucion)}</div>
+          <div title="Horas hábiles entre el reporte y el inicio de la solución"><div className="muted">Respuesta de Mantención</div>{f.fecha_inicio_solucion || f.estado === 'abierto' ? hrs(responseHours(f, makeSchedOf(data.assets, data.areas)(f))) : '—'}{!f.fecha_inicio_solucion && f.estado === 'abierto' && ' (en espera)'}</div>
           <label className="f">Encargado asignado
             <select disabled={!isMant} value={f.encargado_id ?? ''} onChange={async (e) => { await update('failures', f.id, { encargado_id: e.target.value || null }); if (e.target.value) notifyEvent({ event: 'case_assigned', failure_id: f.id }); await reload(); }}>
               <option value="">Sin asignar</option>{data.profiles.filter((p) => p.rol === 'mantenimiento' || p.rol === 'admin').map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}

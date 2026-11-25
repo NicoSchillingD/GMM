@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Download } from 'lucide-react';
 import { useApp } from '../lib/app';
 import { availability, downtimeHours, mtbf, mttr } from '../lib/kpi';
+import { avgResponse, areaOfAsset, makeSchedOf, responseHours } from '../lib/schedule';
+import { SCHEDULE_TEXT } from '../config/schedules';
 import { assetLabel, hrs } from '../lib/ui';
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
@@ -11,22 +13,23 @@ export default function Reports() {
   const [from, setFrom] = useState(iso(new Date(Date.now() - 90 * 86400000)));
   const [to, setTo] = useState(iso(new Date()));
   const [area, setArea] = useState('');
-  const f0 = new Date(from), t0 = new Date(`${to}T23:59:59`);
-  const inArea = (assetId: string) => !area || data.assets.find((a) => a.id === assetId)?.area_id === area;
+  const f0 = new Date(`${from}T00:00:00`), t0 = new Date(`${to}T23:59:59`);
+  const schedOf = makeSchedOf(data.assets, data.areas); const now = new Date();
+  const inArea = (assetId: string) => !area || areaOfAsset(assetId, data.assets) === area;
   const fs = data.failures.filter((f) => { const d = new Date(f.creado); return d >= f0 && d <= t0 && inArea(f.asset_id); });
-  const M = mttr(fs), B = mtbf(fs, f0, t0), D = availability(B, M);
+  const M = mttr(fs, schedOf), B = mtbf(fs, f0, t0, now, schedOf), D = availability(B, M), R = avgResponse(fs, schedOf);
   const costOf = (fid: string) => data.cost_docs.filter((c) => c.failure_id === fid).reduce((s, c) => s + c.monto, 0);
 
   const rows = data.assets.map((a) => {
     const x = fs.filter((f) => f.asset_id === a.id);
-    return { a, n: x.length, down: x.reduce((s, f) => s + downtimeHours(f), 0), mttr: mttr(x), mtbf: mtbf(x, f0, t0), cost: x.reduce((s, f) => s + costOf(f.id), 0) };
+    return { a, n: x.length, down: x.reduce((s, f) => s + downtimeHours(f, now, schedOf(f)), 0), mttr: mttr(x, schedOf), mtbf: mtbf(x, f0, t0, now, schedOf), resp: avgResponse(x, schedOf), cost: x.reduce((s, f) => s + costOf(f.id), 0) };
   }).filter((r) => r.n).sort((x, y) => y.n - x.n);
   const totalN = rows.reduce((s, r) => s + r.n, 0) || 1;
   let acc = 0;
 
   const csv = () => {
-    const head = 'TAG,Equipo,Fallas,Detencion_h,MTTR_h,MTBF_h,Costo_CLP';
-    const body = rows.map((r) => [r.a.tag, `${r.a.tipo} ${r.a.marca}`, r.n, r.down.toFixed(1), r.mttr?.toFixed(1) ?? '', r.mtbf?.toFixed(1) ?? '-', r.cost].join(',')).join('\n');
+    const head = 'TAG,Equipo,Fallas,Detencion_h_habiles,MTTR_h_habiles,MTBF_h_habiles,Respuesta_h_habiles,Costo_CLP';
+    const body = rows.map((r) => [r.a.tag, `${r.a.tipo} ${r.a.marca}`, r.n, r.down.toFixed(1), r.mttr?.toFixed(1) ?? '', r.mtbf?.toFixed(1) ?? '-', r.resp?.toFixed(1) ?? '-', r.cost].join(',')).join('\n');
     const url = URL.createObjectURL(new Blob([`${head}\n${body}`], { type: 'text/csv' }));
     Object.assign(document.createElement('a'), { href: url, download: `gmm-reporte-${from}_${to}.csv` }).click();
   };
@@ -41,18 +44,19 @@ export default function Reports() {
       </div>
       <div className="grid g4" style={{ marginBottom: 16 }}>
         <div className="card kpi"><div className="v">{fs.length}</div><div className="l">Fallas</div></div>
-        <div className="card kpi"><div className="v">{hrs(M)}</div><div className="l">MTTR</div></div>
-        <div className="card kpi"><div className="v">{hrs(B)}</div><div className="l">MTBF</div></div>
+        <div className="card kpi"><div className="v">{hrs(M)}</div><div className="l">MTTR (h hábiles)</div></div>
+        <div className="card kpi"><div className="v">{hrs(B)}</div><div className="l">MTBF (h hábiles)</div></div>
+        <div className="card kpi"><div className="v">{hrs(R)}</div><div className="l">Respuesta Mantención (h hábiles)</div></div>
         <div className="card kpi"><div className="v">{D == null ? '—' : `${D.toFixed(1)}%`}</div><div className="l">Disponibilidad</div></div>
-        <div className="card kpi"><div className="v">{hrs(rows.reduce((s, r) => s + r.down, 0))}</div><div className="l">Horas detenidas</div></div>
+        <div className="card kpi"><div className="v">{hrs(rows.reduce((s, r) => s + r.down, 0))}</div><div className="l">Horas detenidas (hábiles)</div></div>
         <div className="card kpi"><div className="v">${rows.reduce((s, r) => s + r.cost, 0).toLocaleString('es-CL')}</div><div className="l">Costo</div></div>
       </div>
       <div className="card"><h2>Pareto de fallas por activo</h2>
-        <table className="stack"><thead><tr><th>Activo</th><th>Fallas</th><th>% acum.</th><th>Detención</th><th>MTTR</th><th title="Requiere al menos 2 fallas con detención en el equipo">MTBF</th><th>Costo</th></tr></thead><tbody>
-          {rows.map((r) => { acc += r.n; return <tr key={r.a.id}><td>{assetLabel(r.a)}</td><td>{r.n}</td><td><div className="bar" style={{ minWidth: 80 }}><i style={{ width: `${(acc / totalN) * 100}%` }} /></div>{((acc / totalN) * 100).toFixed(0)}%</td><td>{hrs(r.down)}</td><td>{hrs(r.mttr)}</td><td>{hrs(r.mtbf)}</td><td>${r.cost.toLocaleString('es-CL')}</td></tr>; })}
+        <table className="stack"><thead><tr><th>Activo</th><th>Fallas</th><th>% acum.</th><th>Detención</th><th>MTTR</th><th title="Requiere al menos 2 fallas con detención en el equipo">MTBF</th><th title="Horas hábiles entre el reporte y el inicio de la solución">Respuesta</th><th>Costo</th></tr></thead><tbody>
+          {rows.map((r) => { acc += r.n; return <tr key={r.a.id}><td>{assetLabel(r.a)}</td><td>{r.n}</td><td><div className="bar" style={{ minWidth: 80 }}><i style={{ width: `${(acc / totalN) * 100}%` }} /></div>{((acc / totalN) * 100).toFixed(0)}%</td><td>{hrs(r.down)}</td><td>{hrs(r.mttr)}</td><td>{hrs(r.mtbf)}</td><td>{hrs(r.resp)}</td><td>${r.cost.toLocaleString('es-CL')}</td></tr>; })}
           {!rows.length && <tr><td className="muted">Sin fallas en el periodo.</td></tr>}
         </tbody></table>
-        <p className="muted" style={{ marginTop: 8 }}>El MTBF se calcula solo en equipos con al menos 2 fallas con detención en el periodo; si no, se muestra «—».</p>
+        <p className="muted" style={{ marginTop: 8 }}>Todas las horas son <b>hábiles</b> según el horario de cada área. {SCHEDULE_TEXT} No se consideran feriados. El MTBF se calcula solo en equipos con al menos 2 fallas con detención en el periodo; si no, se muestra «—».</p>
       </div>
     </>
   );

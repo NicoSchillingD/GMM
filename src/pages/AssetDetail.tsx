@@ -4,6 +4,7 @@ import { update } from '../lib/db';
 import { QrLabel } from './Labels';
 import { AssetBadge, FailBadge, SevBadge, fmt, hrs } from '../lib/ui';
 import { mtbf, mttr } from '../lib/kpi';
+import { avgResponse, makeSchedOf } from '../lib/schedule';
 import type { AssetStatus } from '../lib/types';
 
 export default function AssetDetail() {
@@ -11,6 +12,7 @@ export default function AssetDetail() {
   const { data, can, reload } = useApp();
   const a = data.assets.find((x) => x.id === id);
   if (!a) return <div className="muted">Activo no encontrado. <Link to="/activos">Volver</Link></div>;
+  const schedOf = makeSchedOf(data.assets, data.areas);
   const fs = data.failures.filter((f) => f.asset_id === a.id);
   const children = data.assets.filter((x) => x.parent_id === a.id);
   const parent = data.assets.find((x) => x.id === a.parent_id);
@@ -35,8 +37,9 @@ export default function AssetDetail() {
         <div className="card"><h2>Indicadores (12 meses)</h2>
           <div className="grid g4" style={{ marginTop: 12 }}>
             <div className="kpi"><div className="v">{fs.length}</div><div className="l">Fallas</div></div>
-            <div className="kpi"><div className="v">{hrs(mttr(fs))}</div><div className="l">MTTR</div></div>
-            <div className="kpi"><div className="v">{hrs(mtbf(fs, from, now))}</div><div className="l">MTBF</div></div>
+            <div className="kpi"><div className="v">{hrs(mttr(fs, schedOf))}</div><div className="l">MTTR (h hábiles)</div></div>
+            <div className="kpi"><div className="v">{hrs(mtbf(fs, from, now, now, schedOf))}</div><div className="l">MTBF (h hábiles)</div></div>
+            <div className="kpi"><div className="v">{hrs(avgResponse(fs, schedOf))}</div><div className="l">Respuesta (h hábiles)</div></div>
             <div className="kpi"><div className="v">${cost.toLocaleString('es-CL')}</div><div className="l">Costo fallas</div></div>
           </div>
         </div>
