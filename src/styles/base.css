@@ -98,3 +98,30 @@ tr.click{cursor:pointer}tr.click:hover{background:var(--gray-050)}
 }
 .grid>*{min-width:0}.f input,.f select,.f textarea{min-width:0;max-width:100%}
 a.card.kpi{display:block;text-decoration:none}a.card.kpi:hover{border-color:var(--celeste)}
+
+/* ── Animación de entrada (logo GMM) ───────────────────────────────────────── */
+.splash{position:fixed;inset:0;z-index:1000;background:#fff;display:grid;place-items:center;animation:sp-out .45s ease-in 2.85s forwards;cursor:pointer}
+.splash-logo{display:flex;flex-direction:column;align-items:center;gap:clamp(14px,3.2vw,26px)}
+.splash-word{position:relative;display:flex;align-items:flex-end;font:700 clamp(72px,22vw,150px)/1 var(--font-body);letter-spacing:-.02em;color:var(--navy-800,#00324b);padding-top:.2em}
+.sp-l{position:relative;display:inline-block;opacity:0}
+.sp-l+.sp-l{margin-left:.06em}
+.sp-g{animation:sp-fade .5s ease-out .15s forwards}
+.sp-m1{animation:sp-drop .5s cubic-bezier(.2,.8,.3,1) .4s forwards}
+.sp-m2{animation:sp-side .55s ease-out .6s forwards}
+.sp-bar-top,.sp-bar-bot{position:absolute;left:.08em;border-radius:1px;opacity:0}
+.sp-bar-top{top:-.2em;width:.44em;height:.075em;background:var(--celeste,#0096d2);animation:sp-top .55s ease-out .55s forwards}
+.sp-bar-bot{bottom:-.14em;width:.74em;height:.085em;background:var(--naranjo,#f7841c);animation:sp-bot .5s ease-out .8s forwards}
+/* destello: una copia azul del texto, visible solo en una franja que cruza el logo */
+.splash-glint{position:absolute;left:0;bottom:0;color:var(--celeste,#0096d2);letter-spacing:inherit;pointer-events:none;opacity:0;
+  -webkit-mask-image:linear-gradient(100deg,transparent 42%,#000 50%,transparent 58%);mask-image:linear-gradient(100deg,transparent 42%,#000 50%,transparent 58%);
+  -webkit-mask-size:300% 100%;mask-size:300% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+  animation:sp-glint .95s ease-in-out 1.55s forwards}
+.splash-brand{margin-top:clamp(12px,3.4vw,26px);font:700 clamp(11px,2.6vw,18px)/1 var(--font-body);letter-spacing:.42em;padding-left:.42em;color:var(--navy-800,#00324b);opacity:0;animation:sp-brand .5s ease-out 1.25s forwards}
+@keyframes sp-fade{from{opacity:0;color:#7d93a1}to{opacity:1;color:inherit}}
+@keyframes sp-drop{from{opacity:0;transform:translateY(-.55em);color:#7d93a1}60%{opacity:1}to{opacity:1;transform:none;color:inherit}}
+@keyframes sp-side{from{opacity:0;transform:translateX(.5em);color:#7d93a1}to{opacity:1;transform:none;color:inherit}}
+@keyframes sp-top{from{opacity:.5;transform:translateY(-.22em) scaleY(.25)}to{opacity:1;transform:none}}
+@keyframes sp-bot{from{opacity:0;transform:translateX(-.5em)}to{opacity:1;transform:none}}
+@keyframes sp-glint{0%{opacity:1;-webkit-mask-position:100% 0;mask-position:100% 0}99%{opacity:1;-webkit-mask-position:0 0;mask-position:0 0}100%{opacity:0;-webkit-mask-position:0 0;mask-position:0 0}}
+@keyframes sp-brand{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes sp-out{to{opacity:0}}

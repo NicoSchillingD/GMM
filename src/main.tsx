@@ -5,8 +5,9 @@ import { registerSW } from 'virtual:pwa-register';
 import './styles/base.css';
 import { AppProvider } from './lib/app';
 import { App } from './App';
+import Splash from './components/Splash';
 
 registerSW({ immediate: true });
 createRoot(document.getElementById('root')!).render(
-  <StrictMode><BrowserRouter><AppProvider><App /></AppProvider></BrowserRouter></StrictMode>,
+  <StrictMode><BrowserRouter><AppProvider><App /></AppProvider><Splash /></BrowserRouter></StrictMode>,
 );
