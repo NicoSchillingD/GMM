@@ -33,7 +33,7 @@ export default function AssetDetail() {
             {([['Estado', <AssetBadge s={a.estado} />], ['Marca / modelo', `${a.marca} ${a.modelo}`], ['N° serie', a.serie || '—'], ['Fabricación', a.anio_fab ?? '—'], ['Criticidad', a.criticidad || '—'],
               ['Área', data.areas.find((x) => x.id === a.area_id)?.nombre ?? '—'], ['Padre', parent ? <Link to={`/activos/${parent.id}`}>{parent.tag}</Link> : '—'], ['Responsables', owners.join(', ') || '—'], ['Diagnóstico', a.diagnostico || '—']] as [string, React.ReactNode][]).map(([k, v]) => <tr key={k}><td className="muted">{k}</td><td>{v}</td></tr>)}
           </tbody></table>
-          {can('supervisor', 'mantenimiento') && <Link className="btn accent" style={{ marginTop: 12 }} to={`/fallas/nueva?activo=${a.id}`}>Reportar falla</Link>}
+          {can('supervisor', 'mantenimiento') && <Link className="btn accent" style={{ marginTop: 12 }} to={`/fallas/nueva?activo=${a.id}`}>Reportar falla/hallazgo</Link>}
         </div>
         <div className="card"><h2>Indicadores (12 meses)</h2>
           <div className="grid g4" style={{ marginTop: 12 }}>
