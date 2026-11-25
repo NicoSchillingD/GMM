@@ -49,6 +49,7 @@ tr.click{cursor:pointer}tr.click:hover{background:var(--gray-050)}
 .tree ul{list-style:none;margin:0;padding-left:20px;border-left:1px dashed var(--border-2)}.tree>ul{padding-left:0;border:0}
 .tree li{margin:2px 0}.node{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--radius-md)}.node:hover{background:var(--gray-100)}
 .alert{padding:10px 12px;border-radius:var(--radius-md);border-left:4px solid var(--naranjo);background:var(--orange-100);color:var(--gray-900)}
+.alert.ok{border-color:var(--success);background:#dff3ea}
 .alert.red{border-color:var(--danger);background:#fbe3e0}
 .bar{height:10px;border-radius:5px;background:var(--gray-100);overflow:hidden}.bar>i{display:block;height:100%;background:var(--celeste)}
 .tabbar{display:none}

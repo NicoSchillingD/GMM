@@ -11,7 +11,7 @@ export default function Kanban() {
   const { data, me, can, reload } = useApp();
   const [kind, setKind] = useState(''); const [area, setArea] = useState(''); const [mine, setMine] = useState(false);
   const [move, setMove] = useState<{ f: Failure; to: FailureStatus } | null>(null);
-  const [comment, setComment] = useState(''); const [enc, setEnc] = useState('');
+  const [comment, setComment] = useState(''); const [enc, setEnc] = useState(''); const [sol, setSol] = useState('');
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
   const [drag, setDrag] = useState<string | null>(null);
 
@@ -24,11 +24,11 @@ export default function Kanban() {
   const next = (f: Failure) => allowedTransitions(f, me, data.assets, data.assignments);
   const mantList = data.profiles.filter((p) => p.rol === 'mantenimiento' || p.rol === 'admin');
 
-  const ask = (f: Failure, to: FailureStatus) => { setMove({ f, to }); setComment(''); setEnc(f.encargado_id ?? ''); setErr(''); };
+  const ask = (f: Failure, to: FailureStatus) => { setMove({ f, to }); setComment(''); setSol(f.nota_solucion ?? ''); setEnc(f.encargado_id ?? ''); setErr(''); };
   const confirm = async () => {
     if (!move) return;
     setBusy(true); setErr('');
-    try { await changeStatus(move.f, move.to, me!.id, comment, enc || null); setMove(null); await reload(); }
+    try { await changeStatus(move.f, move.to, me!.id, comment, enc || null, move.to === 'resuelto' ? sol : undefined); setMove(null); await reload(); }
     catch (e) { setErr(e instanceof Error ? e.message : 'No se pudo cambiar el estado.'); } finally { setBusy(false); }
   };
   const drop = (to: FailureStatus) => {
@@ -58,6 +58,7 @@ export default function Kanban() {
                   <div className="row"><Link to={`/fallas/${f.id}`}><b>#{f.numero}</b></Link><KindBadge k={f.tipo} /><SevBadge s={f.severidad} /></div>
                   <div style={{ marginTop: 6 }}>{assetLabel(assetOf(f))}</div>
                   <div className="muted">{f.descripcion.slice(0, 90)}</div>
+                  {f.nota_solucion && (f.estado === 'resuelto' || f.estado === 'cerrado') && <div style={{ marginTop: 6 }}><b>Solución:</b> {f.nota_solucion.slice(0, 90)}</div>}
                   <div className="muted" style={{ marginTop: 6 }}>{fmt(f.creado)} · {who(f.encargado_id) ?? 'Sin encargado'}</div>
                   {next(f).length > 0 && <div className="row" style={{ marginTop: 8 }}>{next(f).map((to) => <button key={to} className="btn sm sec" onClick={() => ask(f, to)}>{s === 'resuelto' && to === 'en_revision' ? 'Reabrir' : `→ ${FAIL_STATUS[to][0]}`}</button>)}</div>}
                 </article>
@@ -73,6 +74,7 @@ export default function Kanban() {
             <h2>#{move.f.numero}: {FAIL_STATUS[move.f.estado][0]} → {FAIL_STATUS[move.to][0]}</h2>
             {move.to === 'en_revision' && isMantenimiento(me) && !move.f.encargado_id && <label className="f">Encargado de Mantención *
               <select value={enc} onChange={(e) => setEnc(e.target.value)}><option value="">Selecciona…</option>{mantList.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}</select></label>}
+            {move.to === 'resuelto' && <label className="f">Solución aplicada *<textarea value={sol} onChange={(e) => setSol(e.target.value)} placeholder="Qué se hizo para resolver el problema" /></label>}
             {move.to === 'cerrado' && <div className="alert">Al cerrar das por validada la reparación.</div>}
             <label className="f">Comentario (opcional)<textarea autoFocus value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Diagnóstico, acción tomada, repuestos, validación…" /></label>
             {err && <div className="alert red">{err}</div>}

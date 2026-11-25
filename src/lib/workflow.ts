@@ -43,7 +43,7 @@ export function allowedTransitions(f: Pick<Failure, 'estado' | 'asset_id'>, u: P
 }
 
 /** Cambia el estado: guarda el comentario (opcional) en el historial y aplica los efectos del paso. */
-export async function changeStatus(f: Failure, to: FailureStatus, authorId: string, comment: string, encargadoId?: string | null): Promise<void> {
+export async function changeStatus(f: Failure, to: FailureStatus, authorId: string, comment: string, encargadoId?: string | null, solution?: string): Promise<void> {
   const now = new Date().toISOString();
   const patch: Partial<Failure> = { estado: to };
   if (to === 'en_revision') {
@@ -53,8 +53,15 @@ export async function changeStatus(f: Failure, to: FailureStatus, authorId: stri
     if (!f.fecha_inicio_solucion) patch.fecha_inicio_solucion = now;
   }
   if (to === 'resuelto' && f.detiene_produccion && !f.liberacion) patch.liberacion = now;
+  let note = comment.trim();
+  if (to === 'resuelto') { // al resolver, Mantención debe dejar escrita la solución aplicada
+    const sol = (solution ?? f.nota_solucion ?? '').trim();
+    if (!sol) throw new Error('Indica la solución aplicada antes de marcar el caso como Resuelto.');
+    patch.nota_solucion = sol;
+    note = [note, `Solución aplicada: ${sol}`].filter(Boolean).join('\n');
+  }
   const fid = uid();
-  await insert('feedback', { id: fid, failure_id: f.id, autor: authorId, comentario: comment.trim(), estado: to, creado: now });
+  await insert('feedback', { id: fid, failure_id: f.id, autor: authorId, comentario: note, estado: to, creado: now });
   await update('failures', f.id, patch);
   if (to === 'resuelto' && (f.tipo ?? 'falla') === 'falla') await update('assets', f.asset_id, { estado: 'operativo' });
   notifyEvent({ event: 'status_changed', feedback_id: fid });
