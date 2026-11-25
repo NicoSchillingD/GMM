@@ -12,7 +12,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['icon.svg', 'apple-touch-icon.png', 'glasstech-logo.png'],
       manifest: {
         name: 'GMM · Glasstech Maintenance Manager',
         short_name: 'GMM',
