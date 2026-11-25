@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Camera, FileText, Loader2 } from 'lucide-react';
 import { useApp } from '../lib/app';
 import { insert, isDemo, uid, update } from '../lib/db';
@@ -8,6 +8,8 @@ import { notifyEvent } from '../lib/push';
 import { FAIL_STATUS, FailBadge, KindBadge, SevBadge, assetLabel, fmt, hrs } from '../lib/ui';
 import { downtimeHours } from '../lib/kpi';
 import { failureExtraFields } from '../config/failureFields';
+import FailureEdit from '../components/FailureEdit';
+import { deleteFailure, deletionImpact } from '../lib/failureAdmin';
 import { allowedTransitions, changeStatus, isAreaOwner } from '../lib/workflow';
 import type { FailureStatus } from '../lib/types';
 
@@ -18,6 +20,9 @@ export default function FailureDetail() {
   const [txt, setTxt] = useState(''); const [st, setSt] = useState<FailureStatus | ''>('');
   const [cost, setCost] = useState({ tipo: 'compra' as 'compra' | 'gasto' | 'factura', numero: '', proveedor: '', monto: '', fecha: '' });
   const [scanBusy, setScanBusy] = useState(false); const [scanMsg, setScanMsg] = useState('');
+  const [err, setErr] = useState('');
+  const nav = useNavigate();
+  const [editing, setEditing] = useState(false); const [delBusy, setDelBusy] = useState(false); const [delErr, setDelErr] = useState('');
   const camIn = useRef<HTMLInputElement>(null); const fileIn = useRef<HTMLInputElement>(null);
   if (!f) return <div className="muted">Falla no encontrada. <Link to="/fallas">Volver</Link></div>;
   const asset = data.assets.find((a) => a.id === f.asset_id);
@@ -25,10 +30,18 @@ export default function FailureDetail() {
   const costs = data.cost_docs.filter((c) => c.failure_id === f.id);
   const who = (pid: string) => data.profiles.find((p) => p.id === pid)?.nombre ?? '—';
   const isMant = can('mantenimiento');
+  const isAdmin = me?.rol === 'admin';
+  const remove = async () => {
+    const i = deletionImpact(f, data);
+    const parts = [i.comentarios && `${i.comentarios} comentario(s) del historial (se borran)`, i.archivos && `${i.archivos} foto(s)/video(s) (se borran)`, i.costos && `${i.costos} documento(s) de costo (se conservan, sin vínculo a esta falla)`, i.ordenes && `${i.ordenes} orden(es) de trabajo (se conservan, sin vínculo)`].filter(Boolean);
+    if (!window.confirm(`¿Eliminar definitivamente #${f.numero} · ${assetLabel(asset)}?\n\n${parts.length ? parts.join('\n') : 'No tiene comentarios, archivos ni costos asociados.'}\n\nEsta acción no se puede deshacer.`)) return;
+    setDelBusy(true); setDelErr('');
+    try { await deleteFailure(f, data); await reload(); nav('/fallas'); }
+    catch (e) { setDelErr(e instanceof Error ? e.message : 'No se pudo eliminar.'); setDelBusy(false); }
+  };
 
   const next = allowedTransitions(f, me, data.assets, data.assignments);
   const owner = isAreaOwner(me, f.asset_id, data.assets, data.assignments);
-  const [err, setErr] = useState('');
   const send = async () => {
     if (!txt.trim() && !st) return;
     setErr('');
@@ -57,6 +70,9 @@ export default function FailureDetail() {
   return (
     <div style={{ maxWidth: 820 }}>
       <div className="top"><div><Link to="/fallas">← Fallas</Link><h1>#{f.numero} · {assetLabel(asset)}</h1></div><div className="row"><KindBadge k={f.tipo} /><SevBadge s={f.severidad} /><FailBadge s={f.estado} /></div></div>
+      {isAdmin && <div className="row" style={{ marginBottom: 12 }}><button className="btn sec sm" disabled={delBusy} onClick={() => setEditing(!editing)}>{editing ? 'Cerrar edición' : 'Editar'}</button><button className="btn danger sm" disabled={delBusy} onClick={remove}>{delBusy ? 'Eliminando…' : 'Eliminar'}</button></div>}
+      {delErr && <div className="alert red" style={{ marginBottom: 12 }}>{delErr}</div>}
+      {isAdmin && editing && <FailureEdit key={f.id + f.descripcion} f={f} onDone={() => setEditing(false)} />}
       <div className="card form">
         <div className="row"><span className="muted">Reportada {fmt(f.creado)} por {who(f.reportado_por)}</span></div>
         {f.detiene_produccion && <div className="alert red">Detención desde {fmt(f.inicio_detencion)} · liberación {fmt(f.liberacion)} · {hrs(downtimeHours(f))}</div>}
