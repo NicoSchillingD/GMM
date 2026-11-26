@@ -60,7 +60,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setMe(data.profiles.find((p) => p.id === idOrEmail) ?? null);
       return null;
     }
-    const { error } = await supabase!.auth.signInWithPassword({ email: idOrEmail.trim(), password: password ?? '' });
+    const email = idOrEmail.trim(); const pass = password ?? '';
+    let { error } = await supabase!.auth.signInWithPassword({ email, password: pass });
+    // Algunos teclados agregan un espacio al final al elegir una sugerencia: se reintenta sin espacios en los extremos.
+    if (error && pass !== pass.trim()) ({ error } = await supabase!.auth.signInWithPassword({ email, password: pass.trim() }));
     if (error) return 'Correo o contraseña incorrectos.';
     await resolveSupabaseUser();
     await reload();

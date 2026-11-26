@@ -57,11 +57,11 @@ export default function UsersPage() {
   const setPassword = async () => {
     const p = data.profiles.find((x) => x.id === sel);
     if (!p || !can()) return;
-    if (pw.length < 8) return setMsg('La contraseña debe tener 8 o más caracteres.');
+    if (pw.trim().length < 8) return setMsg('La contraseña debe tener 8 o más caracteres.');
     if (!window.confirm(`¿Cambiar la contraseña de ${p.nombre}? La anterior dejará de funcionar.`)) return;
     setBusy(true); setMsg('');
     try {
-      const { data: r, error } = await supabase!.functions.invoke('admin-manage-user', { body: { action: 'set-password', id: p.id, password: pw } });
+      const { data: r, error } = await supabase!.functions.invoke('admin-manage-user', { body: { action: 'set-password', id: p.id, password: pw.trim() } });
       let reason: string | undefined = r?.error;
       if (!reason && error && 'context' in error) reason = (await (error as { context: Response }).context.json().catch(() => null))?.error;
       if (error || r?.error) return setMsg(reason ?? 'No se pudo cambiar la contraseña.');
@@ -95,7 +95,7 @@ export default function UsersPage() {
     setMsg('');
     if (isDemo) await insert('profiles', { id: uid(), nombre: nu.nombre, email: nu.email, rol: nu.rol });
     else {
-      const { data: r, error } = await supabase!.functions.invoke('admin-create-user', { body: nu });
+      const { data: r, error } = await supabase!.functions.invoke('admin-create-user', { body: { ...nu, nombre: nu.nombre.trim(), email: nu.email.trim(), password: nu.password.trim() } });
       if (error || r?.error) return setMsg(r?.error ?? 'No se pudo crear el usuario.');
       setMsg('Usuario creado. Entrégale su contraseña inicial.');
     }
@@ -122,7 +122,7 @@ export default function UsersPage() {
             </div>
             {can() && !isDemo && <div className="row" style={{ alignItems: 'flex-end' }}>
               <label className="f" style={{ maxWidth: 260 }}>Nueva contraseña (8+)<input type="text" autoComplete="off" value={pw} onChange={(e) => setPw(e.target.value)} /></label>
-              <button className="btn sec" disabled={busy || pw.length < 8} onClick={setPassword}>Cambiar contraseña</button>
+              <button className="btn sec" disabled={busy || pw.trim().length < 8} onClick={setPassword}>Cambiar contraseña</button>
             </div>}
             <div className="row">
               <button className="btn" disabled={busy} onClick={save}>Guardar cambios</button>

@@ -6,7 +6,7 @@ import { ABRIR_INSTALAR } from '../components/InstallGuide';
 export default function Login() {
   const { signIn, resetPassword, data } = useApp();
   const [email, setEmail] = useState(''); const [pass, setPass] = useState('');
-  const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false); const [show, setShow] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setBusy(true); setMsg('');
@@ -32,8 +32,9 @@ export default function Login() {
           </div>
         ) : (
           <form className="form" onSubmit={submit}>
-            <label className="f">Correo corporativo<input type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
-            <label className="f">Contraseña<input type="password" autoComplete="current-password" required value={pass} onChange={(e) => setPass(e.target.value)} /></label>
+            <label className="f">Correo corporativo<input type="email" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+            <label className="f">Contraseña<input type={show ? 'text' : 'password'} autoComplete="current-password" autoCapitalize="none" autoCorrect="off" spellCheck={false} required value={pass} onChange={(e) => setPass(e.target.value)} /></label>
+            <label className="row" style={{ gap: 8, cursor: 'pointer', fontSize: 13 }}><input type="checkbox" style={{ width: 'auto' }} checked={show} onChange={(e) => setShow(e.target.checked)} />Mostrar contraseña</label>
             {msg && <div className="alert">{msg}</div>}
             <button className="btn" disabled={busy}>{busy ? 'Ingresando…' : 'Ingresar'}</button>
             <button type="button" className="btn ghost sm" onClick={forgot}>Olvidé mi contraseña</button>
