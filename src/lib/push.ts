@@ -41,11 +41,6 @@ export async function syncPush() {
   try { if ((await pushState()) !== 'on') return; const sub = await (await navigator.serviceWorker.ready).pushManager.getSubscription(); if (sub) await call({ action: 'subscribe', subscription: sub.toJSON(), user_agent: navigator.userAgent }); } catch { /* sin red */ }
 }
 
-/** Al cerrar sesión: el servidor deja de asociar este dispositivo a la cuenta, pero se conserva el permiso para el próximo ingreso. */
-export async function detachPush() {
-  try { const sub = await (await navigator.serviceWorker.getRegistration())?.pushManager.getSubscription(); if (sub) await call({ action: 'unsubscribe', endpoint: sub.endpoint }); } catch { /* ignorar */ }
-}
-
 export async function disablePush() {
   try {
     const sub = await (await navigator.serviceWorker.getRegistration())?.pushManager.getSubscription();
