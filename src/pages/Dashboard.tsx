@@ -3,8 +3,7 @@ import PushBell from '../components/PushBell';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { useApp } from '../lib/app';
-import { downtimeHours } from '../lib/kpi';
-import { ASSET_STATUS, assetLabel, fmt, hrs, SevBadge, FailBadge } from '../lib/ui';
+import { ASSET_STATUS, assetLabel, fmt, SevBadge, FailBadge } from '../lib/ui';
 import type { AssetStatus } from '../lib/types';
 
 export default function Dashboard() {
@@ -12,7 +11,6 @@ export default function Dashboard() {
   const { assets, failures, plans } = data;
   const now = new Date();
   const open = failures.filter((f) => f.estado !== 'cerrado' && f.estado !== 'resuelto');
-  const stopped = open.filter((f) => f.severidad === 'urgente' && f.detiene_produccion && !f.liberacion);
   const overduePlans = plans.filter((p) => new Date(p.proxima_fecha) < now);
   const ORDER: AssetStatus[] = ['operativo', 'en_mantencion', 'fuera_servicio', 'standby', 'desincorporado'];
   const count = (st: AssetStatus) => assets.filter((a) => a.estado === st).length;
@@ -25,7 +23,6 @@ export default function Dashboard() {
       <BrandStrip />
       <div className="top"><h1>Dashboard</h1><div className="row"><PushBell />{can('supervisor', 'mantenimiento') && <Link className="btn accent" to="/fallas/nueva"><Plus size={16} />Reportar falla/hallazgo</Link>}</div></div>
       <div className="grid" style={{ marginBottom: 16 }}>
-        {stopped.map((f) => <div key={f.id} className="alert red"><b>Máquina detenida:</b> {assetLabel(A(f.asset_id))} desde {fmt(f.inicio_detencion)} ({hrs(downtimeHours(f))}) · <Link to={`/fallas/${f.id}`}>ver</Link></div>)}
         {overduePlans.map((p) => <div key={p.id} className="alert">Preventivo vencido: <b>{p.nombre}</b> en {assetLabel(A(p.asset_id))} (vencía {new Date(p.proxima_fecha).toLocaleDateString('es-CL')})</div>)}
       </div>
       <div className="grid g4" style={{ marginBottom: 16 }}>

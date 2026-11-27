@@ -30,7 +30,11 @@ export function App() {
   const loc = useLocation();
   const bar = useRef<HTMLElement>(null);
   // Al cambiar de sección, la barra se desliza para dejar visible la pestaña activa.
-  useEffect(() => { bar.current?.querySelector('a.active')?.scrollIntoView({ inline: 'center', block: 'nearest' }); }, [loc.pathname, loading, me]);
+  useEffect(() => {
+    // Centrar la pestaña activa moviendo solo la barra (scrollIntoView movía también la página y la barra "saltaba").
+    const b = bar.current; const a = b?.querySelector<HTMLElement>('a.active');
+    if (b && a) b.scrollLeft = a.offsetLeft - (b.clientWidth - a.offsetWidth) / 2;
+  }, [loc.pathname, loading, me]);
   if (loading) return <div className="main muted">Cargando…</div>;
   if (!me) return <Login />;
   const visible = links.filter(([to]) => (to === '/usuarios' ? can() : to === '/costos' || to === '/reportes' ? can('mantenimiento', 'consulta') : true));
